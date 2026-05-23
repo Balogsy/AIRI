@@ -627,3 +627,34 @@ st.write("---")
 st.caption(
     "Developed in fulfillment of MSc Information Technology Research Dissertation requirements."
 )
+# --- ADMIN SECURE VIEW (Append to the end of the script) ---
+st.write("---")
+with st.expander("🔐 Admin View: Review Collected Master Feedback"):
+    # Password protection layer (Optional but highly recommended)
+    admin_password = st.text_input("Enter Admin Password to access raw dataset", type="password")
+    
+    if admin_password == "MScDissertation2026": # Change this to a secure key of your choice
+        file_path = "airi_expert_feedback_master.csv"
+        
+        if os.path.exists(file_path):
+            master_df = pd.read_csv(file_path)
+            
+            # Key statistics display
+            st.markdown(f"**Total Expert Responses Collected:** `{len(master_df)}`")
+            st.metric("Average Evaluated SUS Score", f"{master_df['SUS_Score'].mean():.2f} / 100")
+            
+            # Display interactive dataframe
+            st.dataframe(master_df, use_container_width=True)
+            
+            # Direct Download option for your local analysis environment
+            csv_bytes = master_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="⬇️ Export Master File to PC",
+                data=csv_bytes,
+                file_name="airi_master_feedback_exported.csv",
+                mime="text/csv"
+            )
+        else:
+            st.info("No master feedback file has been generated yet. Please submit a dummy review first.")
+    elif admin_password != "":
+        st.error("Incorrect password entry.")
