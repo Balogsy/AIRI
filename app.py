@@ -65,11 +65,11 @@ for MSc Information Technology dissertation purposes.
 The machine learning outputs are exploratory and based on synthetic institutional readiness data.
 """)
 
-# UPDATED: Included the 4th tab for Stage 5 Expert Feedback
-tab_assessment, tab_empirical, tab_performance, tab_feedback = st.tabs([
+# UPDATED: Rearranged tabs to make Pre-Deployment Analysis the 3rd panel
+tab_assessment, tab_performance, tab_empirical, tab_feedback = st.tabs([
     "📊 Institutional Assessment Tool",
-    "📈 Stage 1 Empirical Validation Results",
     "⚙️ ML Engine Evaluation Metrics",
+    "📈 Stage 1 Pre-Deployment Empirical Validation Results",
     "🧪 Stage 5 Expert Feedback (SUS + Thematic)"
 ])
 
@@ -324,131 +324,7 @@ with tab_assessment:
             maturity. Additional workflow automation may improve alignment.
             """)
 
-with tab_empirical:
-    st.markdown("### 📈 Verification Analysis of Expert Panels")
-
-    st.write("""
-    This section presents the statistical validation properties associated
-    with the Stage 1 expert review process (N = 120 respondents).
-    """)
-
-    col_e1, col_e2, col_e3 = st.columns(3)
-
-    col_e1.metric(
-        "Fleiss' Kappa Reliability",
-        "0.97",
-        help="Indicates strong expert consensus."
-    )
-
-    col_e2.metric(
-        "S-CVI / Average Score",
-        "0.934",
-        help="Scale Content Validity Index."
-    )
-
-    col_e3.metric(
-        "Indicators Cronbach Alpha",
-        "0.91",
-        help="Internal consistency reliability."
-    )
-
-    st.markdown("#### Content Validity Index (I-CVI) Matrix")
-
-    cvi_df = pd.DataFrame([
-        {
-            "Indicator ID": "IND-D1-01",
-            "Description": "Data Quality Systematic Monitoring",
-            "I-CVI": 0.833,
-            "Mean Relevance": 3.317
-        },
-        {
-            "Indicator ID": "IND-D1-02",
-            "Description": "Data Stewardship & Lineage Tracking",
-            "I-CVI": 0.914,
-            "Mean Relevance": 3.362
-        },
-        {
-            "Indicator ID": "IND-D1-03",
-            "Description": "Integrated Systems Architecture",
-            "I-CVI": 0.879,
-            "Mean Relevance": 3.353
-        },
-        {
-            "Indicator ID": "IND-D2-01",
-            "Description": "Machine Learning Deployment Capability",
-            "I-CVI": 0.930,
-            "Mean Relevance": 3.548
-        },
-        {
-            "Indicator ID": "IND-D2-02",
-            "Description": "MLOps Lifecycle & Drift Governance",
-            "I-CVI": 0.905,
-            "Mean Relevance": 3.500
-        },
-        {
-            "Indicator ID": "IND-D2-03",
-            "Description": "Infrastructure Resilience & Recovery",
-            "I-CVI": 0.930,
-            "Mean Relevance": 3.623
-        },
-        {
-            "Indicator ID": "IND-D3-01",
-            "Description": "Documented FCA Alignment Standards",
-            "I-CVI": 0.923,
-            "Mean Relevance": 3.632
-        },
-        {
-            "Indicator ID": "IND-D3-02",
-            "Description": "FCA Consumer Duty Outcome Auditing",
-            "I-CVI": 0.950,
-            "Mean Relevance": 3.650
-        },
-        {
-            "Indicator ID": "IND-D3-03",
-            "Description": "Immutable Outcome Auditing Logs",
-            "I-CVI": 0.940,
-            "Mean Relevance": 3.650
-        },
-        {
-            "Indicator ID": "IND-D4-01",
-            "Description": "Talent Readiness & System Literacy",
-            "I-CVI": 0.974,
-            "Mean Relevance": 3.687
-        },
-        {
-            "Indicator ID": "IND-D4-02",
-            "Description": "Structured Change Control Controls",
-            "I-CVI": 0.966,
-            "Mean Relevance": 3.701
-        },
-        {
-            "Indicator ID": "IND-D4-03",
-            "Description": "Executive Budget Sponsorship Ownership",
-            "I-CVI": 0.974,
-            "Mean Relevance": 3.741
-        },
-        {
-            "Indicator ID": "IND-D5-01",
-            "Description": "Fairness Assessment & Bias Mitigation",
-            "I-CVI": 0.983,
-            "Mean Relevance": 3.741
-        },
-        {
-            "Indicator ID": "IND-D5-02",
-            "Description": "Customer-Facing Explainability Protocols",
-            "I-CVI": 0.966,
-            "Mean Relevance": 3.735
-        },
-        {
-            "Indicator ID": "IND-D5-03",
-            "Description": "Clear Accountability Oversight Structures",
-            "I-CVI": 0.949,
-            "Mean Relevance": 3.632
-        }
-    ])
-
-    st.dataframe(cvi_df, use_container_width=True)
-
+# UPDATED: This block is now linked to tab_performance (Tab 2)
 with tab_performance:
     st.markdown("### 🔬 Exploratory Readiness Classification Model Metrics")
 
@@ -588,7 +464,132 @@ with tab_performance:
     except Exception:
         st.info("SHAP summary plot not available.")
 
-# ADDED NEW TAB BLOCK: Stage 5 Expert Interaction & Evaluation
+# UPDATED: This block is now linked to tab_empirical (Tab 3)
+with tab_empirical:
+    st.markdown("### 📈 Pre-Deployment Verification Analysis of Expert Panels")
+
+    st.write("""
+    This section presents the statistical validation properties associated
+    with the Stage 1 expert review process (N = 120 respondents).
+    """)
+
+    col_e1, col_e2, col_e3 = st.columns(3)
+
+    col_e1.metric(
+        "Fleiss' Kappa Reliability",
+        "0.97",
+        help="Indicates strong expert consensus."
+    )
+
+    col_e2.metric(
+        "S-CVI / Average Score",
+        "0.934",
+        help="Scale Content Validity Index."
+    )
+
+    col_e3.metric(
+        "Indicators Cronbach Alpha",
+        "0.91",
+        help="Internal consistency reliability."
+    )
+
+    st.markdown("#### Content Validity Index (I-CVI) Matrix")
+
+    cvi_df = pd.DataFrame([
+        {
+            "Indicator ID": "IND-D1-01",
+            "Description": "Data Quality Systematic Monitoring",
+            "I-CVI": 0.833,
+            "Mean Relevance": 3.317
+        },
+        {
+            "Indicator ID": "IND-D1-02",
+            "Description": "Data Stewardship & Lineage Tracking",
+            "I-CVI": 0.914,
+            "Mean Relevance": 3.362
+        },
+        {
+            "Indicator ID": "IND-D1-03",
+            "Description": "Integrated Systems Architecture",
+            "I-CVI": 0.879,
+            "Mean Relevance": 3.353
+        },
+        {
+            "Indicator ID": "IND-D2-01",
+            "Description": "Machine Learning Deployment Capability",
+            "I-CVI": 0.930,
+            "Mean Relevance": 3.548
+        },
+        {
+            "Indicator ID": "IND-D2-02",
+            "Description": "MLOps Lifecycle & Drift Governance",
+            "I-CVI": 0.905,
+            "Mean Relevance": 3.500
+        },
+        {
+            "Indicator ID": "IND-D2-03",
+            "Description": "Infrastructure Resilience & Recovery",
+            "I-CVI": 0.930,
+            "Mean Relevance": 3.623
+        },
+        {
+            "Indicator ID": "IND-D3-01",
+            "Description": "Documented FCA Alignment Standards",
+            "I-CVI": 0.923,
+            "Mean Relevance": 3.632
+        },
+        {
+            "Indicator ID": "IND-D3-02",
+            "Description": "FCA Consumer Duty Outcome Auditing",
+            "I-CVI": 0.950,
+            "Mean Relevance": 3.650
+        },
+        {
+            "Indicator ID": "IND-D3-03",
+            "Description": "Immutable Outcome Auditing Logs",
+            "I-CVI": 0.940,
+            "Mean Relevance": 3.650
+        },
+        {
+            "Indicator ID": "IND-D4-01",
+            "Description": "Talent Readiness & System Literacy",
+            "I-CVI": 0.974,
+            "Mean Relevance": 3.687
+        },
+        {
+            "Indicator ID": "IND-D4-02",
+            "Description": "Structured Change Control Controls",
+            "I-CVI": 0.966,
+            "Mean Relevance": 3.701
+        },
+        {
+            "Indicator ID": "IND-D4-03",
+            "Description": "Executive Budget Sponsorship Ownership",
+            "I-CVI": 0.974,
+            "Mean Relevance": 3.741
+        },
+        {
+            "Indicator ID": "IND-D5-01",
+            "Description": "Fairness Assessment & Bias Mitigation",
+            "I-CVI": 0.983,
+            "Mean Relevance": 3.741
+        },
+        {
+            "Indicator ID": "IND-D5-02",
+            "Description": "Customer-Facing Explainability Protocols",
+            "I-CVI": 0.966,
+            "Mean Relevance": 3.735
+        },
+        {
+            "Indicator ID": "IND-D5-03",
+            "Description": "Clear Accountability Oversight Structures",
+            "I-CVI": 0.949,
+            "Mean Relevance": 3.632
+        }
+    ])
+
+    st.dataframe(cvi_df, use_container_width=True)
+
 with tab_feedback:
     st.markdown("### 🧪 Stage 5 Expert Interaction & Evaluation")
     
