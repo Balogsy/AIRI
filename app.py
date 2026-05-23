@@ -602,7 +602,7 @@ with tab_feedback:
     t7 = st.text_area("7. What would improve your trust or understanding of the system?")
     st.markdown("---")
     
-    if st.button("📥 Save Expert Feedback"):
+    if st.button("Save Expert Feedback"):
         feedback_df = pd.DataFrame([{
             "Expert_ID": st.session_state.get("expert_id", "anonymous"),
             "SUS_Score": sus_total,
@@ -648,7 +648,7 @@ with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
             st.dataframe(master_df, use_container_width=True)
             
             st.write("---")
-            st.markdown("#### 🗑️ Danger Zone: Delete Feedback Entries")
+            st.markdown("#### 🗑️ Delete Feedback Entries")
             
             if len(master_df) > 0:
                 # Let the admin choose a row index to delete based on the table above
@@ -685,7 +685,7 @@ with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
             if len(master_df) > 0:
                 csv_bytes = master_df.to_csv(index=False).encode('utf-8')
                 st.download_button(
-                    label="零件 Export Master File to PC",
+                    label="📥 Export Master File to PC",
                     data=csv_bytes,
                     file_name="airi_master_feedback_exported.csv",
                     mime="text/csv"
