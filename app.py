@@ -58,7 +58,7 @@ for MSc Information Technology dissertation purposes.
 The machine learning outputs are exploratory and based on synthetic institutional readiness data.
 """)
 
-# UPDATED: Rearranged tabs to make Pre-Deployment Analysis the 3rd panel
+# Rearranged tabs to make Pre-Deployment Analysis the 3rd panel
 tab_assessment, tab_performance, tab_empirical, tab_feedback = st.tabs([
     "📊 Institutional Assessment Tool",
     "⚙️ ML Engine Evaluation Metrics",
@@ -293,7 +293,7 @@ with tab_assessment:
             maturity. Additional workflow automation may improve alignment.
             """)
 
-# UPDATED: This block is now linked to tab_performance (Tab 2)
+# Linked to tab_performance (Tab 2)
 with tab_performance:
     st.markdown("### 🔬 Exploratory Readiness Classification Model Metrics")
     st.write("""
@@ -419,7 +419,7 @@ with tab_performance:
     except Exception:
         st.info("SHAP summary plot not available.")
 
-# UPDATED: This block is now linked to tab_empirical (Tab 3)
+# Linked to tab_empirical (Tab 3)
 with tab_empirical:
     st.markdown("### 📈 Pre-Deployment Verification Analysis of Expert Panels")
     st.write("""
@@ -627,6 +627,7 @@ st.write("---")
 st.caption(
     "Developed in fulfillment of MSc Information Technology Research Dissertation requirements."
 )
+
 # ADMIN SECURE VIEW 
 st.write("---")
 with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
