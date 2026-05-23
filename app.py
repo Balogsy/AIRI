@@ -627,34 +627,71 @@ st.write("---")
 st.caption(
     "Developed in fulfillment of MSc Information Technology Research Dissertation requirements."
 )
-# --- ADMIN SECURE VIEW (Append to the end of the script) ---
+# ADMIN SECURE VIEW 
 st.write("---")
-with st.expander("🔐 Admin View: Review Collected Master Feedback"):
-    # Password protection layer (Optional but highly recommended)
-    admin_password = st.text_input("Enter Admin Password to access raw dataset", type="password")
+with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
+    # Password protection layer
+    admin_password = st.text_input("Enter Admin Password to access data management tools", type="password")
     
-    if admin_password == "1234": # Change this to a secure key of your choice
+    if admin_password == "1234": # Change this to your preferred password
         file_path = "airi_expert_feedback_master.csv"
         
         if os.path.exists(file_path):
+            # Read fresh data
             master_df = pd.read_csv(file_path)
             
-            # Key statistics display
             st.markdown(f"**Total Expert Responses Collected:** `{len(master_df)}`")
-            st.metric("Average Evaluated SUS Score", f"{master_df['SUS_Score'].mean():.2f} / 100")
+            if len(master_df) > 0:
+                st.metric("Average Evaluated SUS Score", f"{master_df['SUS_Score'].mean():.2f} / 100")
             
-            # Display interactive dataframe
+            # Display interactive dataframe with visible row index
             st.dataframe(master_df, use_container_width=True)
             
-            # Direct Download option for your local analysis environment
-            csv_bytes = master_df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="⬇️ Export Master File to PC",
-                data=csv_bytes,
-                file_name="airi_master_feedback_exported.csv",
-                mime="text/csv"
-            )
+            st.write("---")
+            st.markdown("#### 🗑️ Danger Zone: Delete Feedback Entries")
+            
+            if len(master_df) > 0:
+                # Let the admin choose a row index to delete based on the table above
+                row_to_delete = st.number_input(
+                    "Enter the Row Index number you want to remove:", 
+                    min_value=0, 
+                    max_value=len(master_df)-1, 
+                    step=1
+                )
+                
+                # Show a preview of what is about to be deleted so there are no mistakes
+                target_id = master_df.iloc[row_to_delete].get("Expert_ID", "anonymous")
+                st.warning(f"Target row preview: Index `{row_to_delete}` | Expert ID: `{target_id}`")
+                
+                # Require a specific confirmation checkbox before showing the final delete button
+                confirm_delete = st.checkbox("I confirm that I want to permanently delete this row.")
+                
+                if confirm_delete:
+                    if st.button("🔴 Permanently Delete Selected Row", type="primary"):
+                        # Drop the row using pandas
+                        master_df = master_df.drop(master_df.index[row_to_delete])
+                        
+                        # Save the cleaned dataframe back to the CSV file
+                        master_df.to_csv(file_path, index=False)
+                        
+                        st.success(f"Row {row_to_delete} has been deleted successfully! Reloading data...")
+                        # Force a Streamlit rerun to instantly update the displayed table
+                        st.rerun()
+            else:
+                st.info("The master file is currently empty. Nothing to delete.")
+                
+            st.write("---")
+            # Export download button
+            if len(master_df) > 0:
+                csv_bytes = master_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="零件 Export Master File to PC",
+                    data=csv_bytes,
+                    file_name="airi_master_feedback_exported.csv",
+                    mime="text/csv"
+                )
         else:
-            st.info("No master feedback file has been generated yet. Please submit a dummy review first.")
+            st.info("No master feedback file has been generated yet.")
+            
     elif admin_password != "":
         st.error("Incorrect password entry.")
