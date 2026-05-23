@@ -5,18 +5,12 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# ==============================================================================
-# PAGE CONFIGURATION
-# ==============================================================================
 st.set_page_config(
     page_title="AIRI Governance Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ==============================================================================
-# 1. CORE DATA LOGIC & MODEL LOADING
-# ==============================================================================
 @st.cache_resource
 def load_ml_artifacts():
     """
@@ -35,12 +29,8 @@ def load_ml_artifacts():
     except FileNotFoundError:
         return None, None, False
 
-
 rf_model, feature_cols, model_loaded = load_ml_artifacts()
 
-# ==============================================================================
-# INDICATOR DEFINITIONS
-# ==============================================================================
 INDICATOR_MAP = {
     "D1_Data_Quality": "IND-D1-01 Data Quality Monitoring",
     "D1_Data_Governance": "IND-D1-02 Data Lineage & Governance",
@@ -63,9 +53,6 @@ INDICATOR_MAP = {
     "D5_Accountability": "IND-D5-03 Escalation & Governance Committee Structure"
 }
 
-# ==============================================================================
-# 2. APPLICATION INTERFACE DESIGN
-# ==============================================================================
 st.title("Artificial Intelligence Readiness Index (AIRI)")
 
 st.caption(
@@ -78,20 +65,13 @@ for MSc Information Technology dissertation purposes.
 The machine learning outputs are exploratory and based on synthetic institutional readiness data.
 """)
 
-# ==============================================================================
-# TABS
-# ==============================================================================
 tab_assessment, tab_empirical, tab_performance = st.tabs([
     "📊 Institutional Assessment Tool",
     "📈 Stage 1 Empirical Validation Results",
     "⚙️ ML Engine Evaluation Metrics"
 ])
 
-# ==============================================================================
-# TAB 1 — ACTIVE ASSESSMENT ENGINE
-# ==============================================================================
 with tab_assessment:
-
     st.markdown("### 🛠️ Real-time Assessment Simulator")
 
     st.write("""
@@ -99,108 +79,39 @@ with tab_assessment:
     below to observe real-time score calculations and exploratory machine learning predictions.
     """)
 
-    # ==========================================================================
-    # SIDEBAR INPUTS
-    # ==========================================================================
     st.sidebar.header("🎯 Framework Inputs (1.00 - 4.00)")
 
-    # --------------------------------------------------------------------------
-    # 1. Data Infrastructure
-    # --------------------------------------------------------------------------
     st.sidebar.subheader("1. Data Infrastructure")
+    d1_q1 = st.sidebar.slider(INDICATOR_MAP["D1_Data_Quality"], 1.0, 4.0, 2.5, 0.01)
+    d1_q2 = st.sidebar.slider(INDICATOR_MAP["D1_Data_Governance"], 1.0, 4.0, 2.5, 0.01)
+    d1_q3 = st.sidebar.slider(INDICATOR_MAP["D1_Data_Integration"], 1.0, 4.0, 2.5, 0.01)
 
-    d1_q1 = st.sidebar.slider(
-        INDICATOR_MAP["D1_Data_Quality"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d1_q2 = st.sidebar.slider(
-        INDICATOR_MAP["D1_Data_Governance"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d1_q3 = st.sidebar.slider(
-        INDICATOR_MAP["D1_Data_Integration"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    # --------------------------------------------------------------------------
-    # 2. Technological Maturity
-    # --------------------------------------------------------------------------
     st.sidebar.subheader("2. Technological Maturity")
+    d2_q1 = st.sidebar.slider(INDICATOR_MAP["D2_System_Capability"], 1.0, 4.0, 2.5, 0.01)
+    d2_q2 = st.sidebar.slider(INDICATOR_MAP["D2_AI_Tooling"], 1.0, 4.0, 2.5, 0.01)
+    d2_q3 = st.sidebar.slider(INDICATOR_MAP["D2_Infrastructure_Resilience"], 1.0, 4.0, 2.5, 0.01)
 
-    d2_q1 = st.sidebar.slider(
-        INDICATOR_MAP["D2_System_Capability"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d2_q2 = st.sidebar.slider(
-        INDICATOR_MAP["D2_AI_Tooling"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d2_q3 = st.sidebar.slider(
-        INDICATOR_MAP["D2_Infrastructure_Resilience"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    # --------------------------------------------------------------------------
-    # 3. Regulatory Compliance
-    # --------------------------------------------------------------------------
     st.sidebar.subheader("3. Regulatory Compliance")
+    d3_q1 = st.sidebar.slider(INDICATOR_MAP["D3_FCA_Alignment"], 1.0, 4.0, 2.5, 0.01)
+    d3_q2 = st.sidebar.slider(INDICATOR_MAP["D3_Consumer_Duty"], 1.0, 4.0, 2.5, 0.01)
+    d3_q3 = st.sidebar.slider(INDICATOR_MAP["D3_Audit_Trail"], 1.0, 4.0, 2.5, 0.01)
 
-    d3_q1 = st.sidebar.slider(
-        INDICATOR_MAP["D3_FCA_Alignment"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d3_q2 = st.sidebar.slider(
-        INDICATOR_MAP["D3_Consumer_Duty"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d3_q3 = st.sidebar.slider(
-        INDICATOR_MAP["D3_Audit_Trail"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    # --------------------------------------------------------------------------
-    # 4. Organisational Capability
-    # --------------------------------------------------------------------------
     st.sidebar.subheader("4. Organisational Capability")
+    d4_q1 = st.sidebar.slider(INDICATOR_MAP["D4_Talent_Readiness"], 1.0, 4.0, 2.5, 0.01)
+    d4_q2 = st.sidebar.slider(INDICATOR_MAP["D4_Change_Management"], 1.0, 4.0, 2.5, 0.01)
+    d4_q3 = st.sidebar.slider(INDICATOR_MAP["D4_Leadership_Commitment"], 1.0, 4.0, 2.5, 0.01)
 
-    d4_q1 = st.sidebar.slider(
-        INDICATOR_MAP["D4_Talent_Readiness"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d4_q2 = st.sidebar.slider(
-        INDICATOR_MAP["D4_Change_Management"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d4_q3 = st.sidebar.slider(
-        INDICATOR_MAP["D4_Leadership_Commitment"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    # --------------------------------------------------------------------------
-    # 5. Ethical Governance
-    # --------------------------------------------------------------------------
     st.sidebar.subheader("5. Ethical Governance")
+    d5_q1 = st.sidebar.slider(INDICATOR_MAP["D5_Bias_Mitigation"], 1.0, 4.0, 2.5, 0.01)
+    d5_q2 = st.sidebar.slider(INDICATOR_MAP["D5_Explainability"], 1.0, 4.0, 2.5, 0.01)
+    d5_q3 = st.sidebar.slider(INDICATOR_MAP["D5_Accountability"], 1.0, 4.0, 2.5, 0.01)
 
-    d5_q1 = st.sidebar.slider(
-        INDICATOR_MAP["D5_Bias_Mitigation"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d5_q2 = st.sidebar.slider(
-        INDICATOR_MAP["D5_Explainability"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    d5_q3 = st.sidebar.slider(
-        INDICATOR_MAP["D5_Accountability"], 1.0, 4.0, 2.5, 0.01
-    )
-
-    # ==========================================================================
-    # CORE MATHEMATICAL PIPELINE
-    # ==========================================================================
     d1_avg = np.mean([d1_q1, d1_q2, d1_q3])
     d2_avg = np.mean([d2_q1, d2_q2, d2_q3])
     d3_avg = np.mean([d3_q1, d3_q2, d3_q3])
     d4_avg = np.mean([d4_q1, d4_q2, d4_q3])
     d5_avg = np.mean([d5_q1, d5_q2, d5_q3])
 
-    # ==========================================================================
-    # AIRI WEIGHTING STRUCTURE
-    # ==========================================================================
     st.markdown("### AIRI Weighting Structure")
 
     weight_df = pd.DataFrame({
@@ -224,9 +135,6 @@ with tab_assessment:
         "D5": 0.20
     }
 
-    # ==========================================================================
-    # COMPOSITE SCORE CALCULATION
-    # ==========================================================================
     raw_composite = (
         d1_avg * weights["D1"] +
         d2_avg * weights["D2"] +
@@ -237,13 +145,9 @@ with tab_assessment:
 
     composite_score_100 = ((raw_composite - 1.0) / 3.0) * 100
 
-    # ==========================================================================
-    # SENSITIVITY ANALYSIS
-    # ==========================================================================
     run_sensitivity = st.checkbox("Run Sensitivity Analysis")
 
     if run_sensitivity:
-
         adjusted_weights = {
             "D1": 0.15,
             "D2": 0.25,
@@ -269,33 +173,20 @@ with tab_assessment:
         the AIRI score from {composite_score_100:.2f}% to {adjusted_score_100:.2f}%.
         """)
 
-    # ==========================================================================
-    # RESULTS LAYOUT
-    # ==========================================================================
     col_metrics, col_chart = st.columns([1, 2])
 
-    # ==========================================================================
-    # METRICS COLUMN
-    # ==========================================================================
     with col_metrics:
-
         st.metric(
             label="Calculated Composite AIRI Score",
             value=f"{composite_score_100:.2f}%"
         )
 
-        # ----------------------------------------------------------------------
-        # CLASSIFICATION THRESHOLDS
-        # ----------------------------------------------------------------------
         if composite_score_100 >= 80:
             band, color = "Advanced 🚀", "green"
-
         elif composite_score_100 >= 60:
             band, color = "Established ✅", "blue"
-
         elif composite_score_100 >= 40:
             band, color = "Developing ⚠️", "orange"
-
         else:
             band, color = "Nascent 🚨", "red"
 
@@ -311,30 +202,22 @@ with tab_assessment:
 
         st.write("---")
 
-        # ----------------------------------------------------------------------
-        # MACHINE LEARNING PREDICTION
-        # ----------------------------------------------------------------------
         st.markdown("##### ⚙️ Machine Learning Layer Prediction")
 
         if model_loaded:
-
             input_dict = {
                 "D1_Data_Quality": [d1_q1],
                 "D1_Data_Governance": [d1_q2],
                 "D1_Data_Integration": [d1_q3],
-
                 "D2_System_Capability": [d2_q1],
                 "D2_AI_Tooling": [d2_q2],
                 "D2_Infrastructure_Resilience": [d2_q3],
-
                 "D3_FCA_Alignment": [d3_q1],
                 "D3_Consumer_Duty": [d3_q2],
                 "D3_Audit_Trail": [d3_q3],
-
                 "D4_Talent_Readiness": [d4_q1],
                 "D4_Change_Management": [d4_q2],
                 "D4_Leadership_Commitment": [d4_q3],
-
                 "D5_Bias_Mitigation": [d5_q1],
                 "D5_Explainability": [d5_q2],
                 "D5_Accountability": [d5_q3]
@@ -347,10 +230,7 @@ with tab_assessment:
                 ml_prob = rf_model.predict_proba(input_df)[0]
                 classes = rf_model.classes_
 
-                st.info(
-                    f"Random Forest Classifier Output: **{ml_pred}**"
-                )
-
+                st.info(f"Random Forest Classifier Output: **{ml_pred}**")
                 st.write("**Prediction Probability Distribution:**")
 
                 for cls, prob in zip(classes, ml_prob):
@@ -358,18 +238,13 @@ with tab_assessment:
 
             except Exception as e:
                 st.error(f"Model inference error: {e}")
-
         else:
             st.warning("""
             ML artifacts not found. 
             Running in deterministic scoring mode only.
             """)
 
-    # ==========================================================================
-    # CHART COLUMN
-    # ==========================================================================
     with col_chart:
-
         dim_data = pd.DataFrame({
             "Dimension": [
                 "Data Infrastructure",
@@ -378,7 +253,6 @@ with tab_assessment:
                 "Organisational Capability",
                 "Ethical Governance"
             ],
-
             "Score (%)": [
                 ((d1_avg - 1) / 3) * 100,
                 ((d2_avg - 1) / 3) * 100,
@@ -389,7 +263,6 @@ with tab_assessment:
         })
 
         fig, ax = plt.subplots(figsize=(7, 3.5))
-
         sns.barplot(
             x="Score (%)",
             y="Dimension",
@@ -397,9 +270,7 @@ with tab_assessment:
             palette="viridis",
             ax=ax
         )
-
         ax.set_xlim(0, 100)
-
         ax.axvline(
             60,
             color='red',
@@ -407,22 +278,14 @@ with tab_assessment:
             alpha=0.6,
             label='Established Threshold'
         )
-
         plt.tight_layout()
-
         st.pyplot(fig)
 
-    # ==========================================================================
-    # PRESCRIPTIVE GUIDANCE
-    # ==========================================================================
     st.write("---")
-
     st.markdown("### 📋 Prescriptive Remediation & Strategic Guidance")
-
     col_rem1, col_rem2 = st.columns(2)
 
     with col_rem1:
-
         if d3_q2 < 3.0:
             st.error(f"""
             ⚠️ Critical Consumer Duty Deficit 
@@ -442,7 +305,6 @@ with tab_assessment:
             """)
 
     with col_rem2:
-
         if d1_q2 < 3.0:
             st.warning(f"""
             💡 Data Infrastructure Advisory 
@@ -460,11 +322,7 @@ with tab_assessment:
             maturity. Additional workflow automation may improve alignment.
             """)
 
-# ==============================================================================
-# TAB 2 — EMPIRICAL VALIDATION
-# ==============================================================================
 with tab_empirical:
-
     st.markdown("### 📈 Verification Analysis of Expert Panels")
 
     st.write("""
@@ -501,98 +359,84 @@ with tab_empirical:
             "I-CVI": 0.833,
             "Mean Relevance": 3.317
         },
-
         {
             "Indicator ID": "IND-D1-02",
             "Description": "Data Stewardship & Lineage Tracking",
             "I-CVI": 0.914,
             "Mean Relevance": 3.362
         },
-
         {
             "Indicator ID": "IND-D1-03",
             "Description": "Integrated Systems Architecture",
             "I-CVI": 0.879,
             "Mean Relevance": 3.353
         },
-
         {
             "Indicator ID": "IND-D2-01",
             "Description": "Machine Learning Deployment Capability",
             "I-CVI": 0.930,
             "Mean Relevance": 3.548
         },
-
         {
             "Indicator ID": "IND-D2-02",
             "Description": "MLOps Lifecycle & Drift Governance",
             "I-CVI": 0.905,
             "Mean Relevance": 3.500
         },
-
         {
             "Indicator ID": "IND-D2-03",
             "Description": "Infrastructure Resilience & Recovery",
             "I-CVI": 0.930,
             "Mean Relevance": 3.623
         },
-
         {
             "Indicator ID": "IND-D3-01",
             "Description": "Documented FCA Alignment Standards",
             "I-CVI": 0.923,
             "Mean Relevance": 3.632
         },
-
         {
             "Indicator ID": "IND-D3-02",
             "Description": "FCA Consumer Duty Outcome Auditing",
             "I-CVI": 0.950,
             "Mean Relevance": 3.650
         },
-
         {
             "Indicator ID": "IND-D3-03",
             "Description": "Immutable Outcome Auditing Logs",
             "I-CVI": 0.940,
             "Mean Relevance": 3.650
         },
-
         {
             "Indicator ID": "IND-D4-01",
             "Description": "Talent Readiness & System Literacy",
             "I-CVI": 0.974,
             "Mean Relevance": 3.687
         },
-
         {
             "Indicator ID": "IND-D4-02",
             "Description": "Structured Change Control Controls",
             "I-CVI": 0.966,
             "Mean Relevance": 3.701
         },
-
         {
             "Indicator ID": "IND-D4-03",
             "Description": "Executive Budget Sponsorship Ownership",
             "I-CVI": 0.974,
             "Mean Relevance": 3.741
         },
-
         {
             "Indicator ID": "IND-D5-01",
             "Description": "Fairness Assessment & Bias Mitigation",
             "I-CVI": 0.983,
             "Mean Relevance": 3.741
         },
-
         {
             "Indicator ID": "IND-D5-02",
             "Description": "Customer-Facing Explainability Protocols",
             "I-CVI": 0.966,
             "Mean Relevance": 3.735
         },
-
         {
             "Indicator ID": "IND-D5-03",
             "Description": "Clear Accountability Oversight Structures",
@@ -603,14 +447,8 @@ with tab_empirical:
 
     st.dataframe(cvi_df, use_container_width=True)
 
-# ==============================================================================
-# TAB 3 — MODEL PERFORMANCE
-# ==============================================================================
 with tab_performance:
-
-    st.markdown(
-        "### 🔬 Exploratory Readiness Classification Model Metrics"
-    )
+    st.markdown("### 🔬 Exploratory Readiness Classification Model Metrics")
 
     st.write("""
     Below are the benchmark metrics derived from the Stage 3 modelling pipeline,
@@ -619,14 +457,8 @@ with tab_performance:
 
     col_m1, col_m2 = st.columns(2)
 
-    # ==========================================================================
-    # RANDOM FOREST
-    # ==========================================================================
     with col_m1:
-
-        st.markdown(
-            "#### 🌲 Random Forest Classifier (Selected Model)"
-        )
+        st.markdown("#### 🌲 Random Forest Classifier (Selected Model)")
 
         rf_metrics_df = pd.DataFrame({
             "Evaluation Parameter": [
@@ -636,7 +468,6 @@ with tab_performance:
                 "Cohen's Kappa",
                 "Root Mean Squared Error (RMSE)"
             ],
-
             "Value": [
                 "0.940",
                 "0.939",
@@ -647,7 +478,6 @@ with tab_performance:
         })
 
         st.dataframe(rf_metrics_df, use_container_width=True)
-
         st.markdown("##### Classification Performance Breakdown")
 
         class_df = pd.DataFrame([
@@ -658,7 +488,6 @@ with tab_performance:
                 "F1-Score": 0.67,
                 "Support": 2
             },
-
             {
                 "Maturity Tier": "Developing",
                 "Precision": 0.89,
@@ -666,7 +495,6 @@ with tab_performance:
                 "F1-Score": 0.89,
                 "Support": 9
             },
-
             {
                 "Maturity Tier": "Established",
                 "Precision": 0.91,
@@ -674,7 +502,6 @@ with tab_performance:
                 "F1-Score": 0.92,
                 "Support": 31
             },
-
             {
                 "Maturity Tier": "Advanced",
                 "Precision": 0.97,
@@ -686,11 +513,7 @@ with tab_performance:
 
         st.dataframe(class_df, use_container_width=True)
 
-    # ==========================================================================
-    # XGBOOST + FEATURE IMPORTANCE
-    # ==========================================================================
     with col_m2:
-
         st.markdown("#### ⚡ XGBoost Classifier (Baseline Model)")
 
         xgb_metrics_df = pd.DataFrame({
@@ -701,7 +524,6 @@ with tab_performance:
                 "Cohen's Kappa",
                 "Root Mean Squared Error (RMSE)"
             ],
-
             "Value": [
                 "0.900",
                 "0.896",
@@ -712,10 +534,7 @@ with tab_performance:
         })
 
         st.dataframe(xgb_metrics_df, use_container_width=True)
-
-        st.markdown(
-            "##### Illustrative Feature Importance Distribution"
-        )
+        st.markdown("##### Illustrative Feature Importance Distribution")
 
         feat_imp_df = pd.DataFrame([
             {
@@ -723,25 +542,21 @@ with tab_performance:
                 "Random Forest Contribution": 0.1078,
                 "XGBoost Contribution": 0.0517
             },
-
             {
                 "Feature Component": "D5_Bias_Mitigation",
                 "Random Forest Contribution": 0.0923,
                 "XGBoost Contribution": 0.2155
             },
-
             {
                 "Feature Component": "D3_Consumer_Duty",
                 "Random Forest Contribution": 0.0867,
                 "XGBoost Contribution": 0.0631
             },
-
             {
                 "Feature Component": "D4_Talent_Readiness",
                 "Random Forest Contribution": 0.0861,
                 "XGBoost Contribution": 0.0654
             },
-
             {
                 "Feature Component": "D4_Change_Management",
                 "Random Forest Contribution": 0.0759,
@@ -750,7 +565,6 @@ with tab_performance:
         ])
 
         fig_imp, ax_imp = plt.subplots(figsize=(6, 3))
-
         sns.barplot(
             x="Random Forest Contribution",
             y="Feature Component",
@@ -758,16 +572,10 @@ with tab_performance:
             palette="magma",
             ax=ax_imp
         )
-
         plt.title("Illustrative Feature Importance Ranking")
-
         plt.tight_layout()
-
         st.pyplot(fig_imp)
 
-    # ==========================================================================
-    # SHAP VISUALISATION
-    # ==========================================================================
     st.markdown("### Model Explainability")
 
     try:
@@ -775,15 +583,10 @@ with tab_performance:
             "shap_summary_plot.png",
             caption="SHAP Global Feature Importance Summary"
         )
-
     except Exception:
         st.info("SHAP summary plot not available.")
 
-# ==============================================================================
-# FOOTER
-# ==============================================================================
 st.write("---")
-
 st.caption(
     "Developed in fulfillment of MSc Information Technology Research Dissertation requirements."
 )
