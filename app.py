@@ -65,10 +65,12 @@ for MSc Information Technology dissertation purposes.
 The machine learning outputs are exploratory and based on synthetic institutional readiness data.
 """)
 
-tab_assessment, tab_empirical, tab_performance = st.tabs([
+# UPDATED: Included the 4th tab for Stage 5 Expert Feedback
+tab_assessment, tab_empirical, tab_performance, tab_feedback = st.tabs([
     "📊 Institutional Assessment Tool",
     "📈 Stage 1 Empirical Validation Results",
-    "⚙️ ML Engine Evaluation Metrics"
+    "⚙️ ML Engine Evaluation Metrics",
+    "🧪 Stage 5 Expert Feedback (SUS + Thematic)"
 ])
 
 with tab_assessment:
@@ -585,6 +587,103 @@ with tab_performance:
         )
     except Exception:
         st.info("SHAP summary plot not available.")
+
+# ADDED NEW TAB BLOCK: Stage 5 Expert Interaction & Evaluation
+with tab_feedback:
+    st.markdown("### 🧪 Stage 5 Expert Interaction & Evaluation")
+    
+    st.write("""
+    This section captures expert feedback following direct interaction with the AIRI dashboard.
+    The model underlying this system is trained on synthetic data guided by expert-derived constructs.
+    This stage evaluates perceived usability, interpretability, and governance usefulness.
+    """)
+
+    st.markdown("## 📊 System Usability Scale (SUS) – AIRI Adapted")
+
+    sus_q = {}
+
+    sus_questions = [
+        "I think I would like to use the AIRI dashboard frequently in my organisation.",
+        "I found the AIRI dashboard unnecessarily complex.",
+        "I thought the dashboard was easy to use.",
+        "I think I would need technical support to use this system.",
+        "I found the various functions in the dashboard well integrated.",
+        "I thought there was too much inconsistency in the dashboard.",
+        "I imagine most professionals would learn to use the AIRI dashboard quickly.",
+        "I found the dashboard very cumbersome to use.",
+        "I felt confident using the AIRI governance dashboard.",
+        "I needed to learn a lot before I could use the system."
+    ]
+
+    for i, q in enumerate(sus_questions, start=1):
+        sus_q[i] = st.radio(
+            f"SUS {i}. {q}",
+            [1, 2, 3, 4, 5],
+            horizontal=True,
+            index=2
+        )
+
+    # SUS scoring
+    sus_score = 0
+    for i in range(1, 11):
+        if i % 2 == 1:
+            sus_score += sus_q[i] - 1
+        else:
+            sus_score += 5 - sus_q[i]
+
+    sus_total = sus_score * 2.5
+
+    st.metric("System Usability Scale (SUS) Score", f"{sus_total:.2f} / 100")
+
+    if sus_total >= 80:
+        st.success("Excellent perceived usability")
+    elif sus_total >= 68:
+        st.info("Above average usability")
+    else:
+        st.warning("Usability may require refinement")
+
+    st.markdown("---")
+
+    st.markdown("## 🧠 Thematic Evaluation (Expert Reflection)")
+
+    st.markdown("### Core Usability & Interpretation")
+
+    t1 = st.text_area("1. How easy was it to understand the AIRI dashboard and its outputs?")
+    t2 = st.text_area("2. Which component was most useful (sliders, ML prediction, score, charts) and why?")
+    t3 = st.text_area("3. Did the AIRI score and ML prediction align with your expectations? Explain.")
+
+    st.markdown("### Governance & Decision Usefulness")
+
+    t4 = st.text_area("4. How useful is the dashboard for governance or compliance decisions (e.g. FCA alignment, Consumer Duty)?")
+    t5 = st.text_area("5. What limitations did you observe for real-world institutional use?")
+
+    st.markdown("### Trust & Explainability")
+
+    t6 = st.text_area("6. How confident are you in the ML-generated predictions?")
+    t7 = st.text_area("7. What would improve your trust or understanding of the system?")
+
+    st.markdown("---")
+
+    if st.button("📥 Save Expert Feedback"):
+
+        feedback_df = pd.DataFrame([{
+            "SUS_Score": sus_total,
+            "Q1": sus_q[1], "Q2": sus_q[2], "Q3": sus_q[3], "Q4": sus_q[4],
+            "Q5": sus_q[5], "Q6": sus_q[6], "Q7": sus_q[7], "Q8": sus_q[8],
+            "Q9": sus_q[9], "Q10": sus_q[10],
+            "T1": t1, "T2": t2, "T3": t3,
+            "T4": t4, "T5": t5,
+            "T6": t6, "T7": t7
+        }])
+
+        csv = feedback_df.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            "⬇️ Download Feedback CSV",
+            csv,
+            "AIRI_expert_feedback.csv",
+            "text/csv"
+        )
 
 st.write("---")
 st.caption(
