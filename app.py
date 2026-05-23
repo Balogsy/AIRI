@@ -633,7 +633,7 @@ with st.expander("🔐 Admin View: Review Collected Master Feedback"):
     # Password protection layer (Optional but highly recommended)
     admin_password = st.text_input("Enter Admin Password to access raw dataset", type="password")
     
-    if admin_password == "MScDissertation2026": # Change this to a secure key of your choice
+    if admin_password == "1234": # Change this to a secure key of your choice
         file_path = "airi_expert_feedback_master.csv"
         
         if os.path.exists(file_path):
