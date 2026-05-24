@@ -567,28 +567,54 @@ with tab_feedback:
 
     st.write("---")
     with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
-        admin_password = st.text_input("Enter Admin Password to access data management tools", type="password")
-        ADMIN_PASSWORD = os.getenv("1234")
-        
+        admin_password = st.text_input(
+            "Enter Admin Password to access data management tools",
+            type="password"
+        )
+
+        ADMIN_PASSWORD = os.getenv("AIRI_ADMIN_PASSWORD")
+        -
         if ADMIN_PASSWORD is None:
-            st.error("Admin password environment variable configuration is missing.")
-        elif admin_password == ADMIN_PASSWORD: 
+            st.error("Admin password is not configured in environment variables.")
+
+        elif admin_password and admin_password == ADMIN_PASSWORD:
+            st.success("Access granted.")
+
             file_path = "airi_expert_feedback_master.csv"
+
             if os.path.exists(file_path):
                 master_df = pd.read_csv(file_path)
+
                 st.markdown(f"**Total Expert Responses Collected:** `{len(master_df)}`")
+
                 if len(master_df) > 0:
-                    st.metric("Average Evaluated SUS Score", f"{master_df['SUS_Score'].mean():.2f} / 100")
+                    st.metric(
+                        "Average Evaluated SUS Score",
+                        f"{master_df['SUS_Score'].mean():.2f} / 100"
+                    )
                 st.dataframe(master_df, use_container_width=True)
-                
+
                 st.write("---")
                 st.markdown("#### 🗑️ Delete Feedback Entries")
+
                 if len(master_df) > 0:
-                    row_to_delete = st.number_input("Enter the Row Index number you want to remove:", min_value=0, max_value=len(master_df)-1, step=1)
-                    st.warning(f"Target row preview: Index `{row_to_delete}` | Expert ID: `{master_df.iloc[row_to_delete].get('Expert_ID', 'anonymous')}`")
+                    row_to_delete = st.number_input(
+                        "Enter the Row Index number you want to remove:",
+                        min_value=0,
+                        max_value=len(master_df)-1,
+                        step=1
+                    )
+                    st.warning(
+                        f"Target row preview: Index `{row_to_delete}` | "
+                        f"Expert ID: `{master_df.iloc[row_to_delete].get('Expert_ID', 'anonymous')}`"
+                    )
                     if st.checkbox("I confirm that I want to permanently delete this row."):
                         if st.button("🔴 Permanently Delete Selected Row", type="primary"):
                             with lock:
                                 master_df = master_df.drop(master_df.index[row_to_delete])
                                 master_df.to_csv(file_path, index=False)
-                            st.success(f"Row {row_to_delete} has been deleted successfully! Please refresh application window.")
+                            st.success("Row deleted successfully. Refresh app.")
+
+        else:
+            if admin_password:
+                st.error("Incorrect password.")
