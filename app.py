@@ -248,23 +248,79 @@ with tab_assessment:
             st.warning("ML artifacts not found. Running in deterministic scoring mode only.")
             
     with col_chart:
-        dim_data = pd.DataFrame({
-            "Dimension": ["Data Infrastructure", "Technological Maturity", "Regulatory Compliance", "Organisational Capability", "Ethical Governance"],
-            "Weighted Contribution (%)": [
-                (((d1_avg - 1) / 3) * 100) * weights["D1"],
-                (((d2_avg - 1) / 3) * 100) * weights["D2"],
-                (((d3_avg - 1) / 3) * 100) * weights["D3"],
-                (((d4_avg - 1) / 3) * 100) * weights["D4"],
-                (((d5_avg - 1) / 3) * 100) * weights["D5"]
+        # -----------------------------
+        # 1. PERFORMANCE ONLY (UNWEIGHTED)
+        # -----------------------------
+        performance_df = pd.DataFrame({
+            "Dimension": [
+                "Data Infrastructure",
+                "Technological Maturity",
+                "Regulatory Compliance",
+                "Organisational Capability",
+                "Ethical Governance"
+            ],
+            "Performance (%)": [
+                ((d1_avg - 1) / 3) * 100,
+                ((d2_avg - 1) / 3) * 100,
+                ((d3_avg - 1) / 3) * 100,
+                ((d4_avg - 1) / 3) * 100,
+                ((d5_avg - 1) / 3) * 100
             ]
         })
-        fig, ax = plt.subplots(figsize=(7, 3.5))
-        sns.barplot(x="Weighted Contribution (%)", y="Dimension", data=dim_data, palette="viridis", ax=ax)
-        ax.set_xlim(0, max(dim_data["Weighted Contribution (%)"]) + 5)
-        
-        target_line = 100 / 5
-        ax.axvline(target_line, color='red', linestyle='--', alpha=0.6, label='Equal Weight Benchmark')
-        ax.legend()
+
+        # -----------------------------
+        # 2. WEIGHTED CONTRIBUTION
+        # -----------------------------
+        weighted_df = pd.DataFrame({
+            "Dimension": performance_df["Dimension"],
+            "Weighted Contribution (%)": [
+                performance_df["Performance (%)"][0] * weights["D1"],
+                performance_df["Performance (%)"][1] * weights["D2"],
+                performance_df["Performance (%)"][2] * weights["D3"],
+                performance_df["Performance (%)"][3] * weights["D4"],
+                performance_df["Performance (%)"][4] * weights["D5"]
+            ]
+        })
+
+        # -----------------------------
+        # FIGURE SETUP (DUAL PANEL)
+        # -----------------------------
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+        # ===== PANEL 1: PERFORMANCE =====
+        sns.barplot(
+            x="Performance (%)",
+            y="Dimension",
+            data=performance_df,
+            ax=axes[0],
+            palette="Blues_r"
+        )
+        axes[0].set_title("AIRI Dimension Performance (Unweighted)")
+        axes[0].set_xlim(0, 100)
+        axes[0].axvline(50, color="grey", linestyle="--", alpha=0.4)
+        axes[0].set_xlabel("Performance Score (%)")
+        axes[0].set_ylabel("")
+
+        # ===== PANEL 2: WEIGHTED IMPACT =====
+        sns.barplot(
+            x="Weighted Contribution (%)",
+            y="Dimension",
+            data=weighted_df,
+            ax=axes[1],
+            palette="viridis"
+        )
+        axes[1].set_title("AIRI Weighted Contribution (Policy Adjusted)")
+        axes[1].set_xlim(0, max(weighted_df["Weighted Contribution (%)"]) + 5)
+        axes[1].axvline(100 / 5, color="red", linestyle="--", alpha=0.6)
+        axes[1].set_xlabel("Weighted Impact (%)")
+        axes[1].set_ylabel("")
+
+        plt.suptitle(
+            "AIRI Dual-Mode Governance View: Performance vs Weighted Impact",
+            fontsize=14,
+            fontweight="bold"
+        )
+
         plt.tight_layout()
         st.pyplot(fig, clear_figure=True)
         
