@@ -222,7 +222,7 @@ with tab_assessment:
                     st.info(f"Classifier Inference: **{ml_label}**")
                     st.info("""
                     The sensitivity weighting structure affects only the deterministic
-                    AIRI composite calculation. The machine learning classifier operates
+                    AIRI composite calculation, while the machine learning classifier operates
                     independent using the raw institutional indicator inputs.
                     """)
                     
