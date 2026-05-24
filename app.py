@@ -68,8 +68,8 @@ The machine learning outputs are exploratory and based on synthetic institutiona
 tab_assessment, tab_performance, tab_empirical, tab_feedback = st.tabs([
     "📊 Institutional Assessment Tool",
     "⚙️ ML Engine Evaluation Metrics",
-    "📈 Stage 1 Pre-Deployment Empirical Validation Results",
-    "🧪 Stage 5 Expert Feedback (SUS + Thematic)"
+    "📈 Pre-Deployment Empirical Validation Results",
+    "🧪 Expert Feedback (SUS + Thematic)"
 ])
 
 with tab_assessment:
@@ -503,7 +503,7 @@ with tab_empirical:
     st.dataframe(cvi_df, use_container_width=True)
 
 with tab_feedback:
-    st.markdown("### 🧪 Stage 5 Expert Interaction & Evaluation")
+    st.markdown("### 🧪 Expert Interaction & Evaluation")
     st.text_input("Expert ID (optional)", key="expert_id")
     st.markdown("## System Usability Scale (SUS) – AIRI Adapted")
     
