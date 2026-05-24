@@ -8,10 +8,7 @@ import os
 import shap  
 import threading
 
-# ISSUE 3 FIX: Establish global random seed for academic reproducibility
 np.random.seed(42)
-
-# ISSUE 5 FIX: Initialize threading lock to eliminate CSV write corruption risks
 lock = threading.Lock()
 
 st.set_page_config(
@@ -20,8 +17,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# FIXED: Integrated all model, feature configuration, and SHAP explainer configurations 
-# into a single cached block to guarantee thread safety and prevent hashing issues.
 @st.cache_resource
 def load_ml_pipeline_and_explainer():
     """
@@ -34,14 +29,11 @@ def load_ml_pipeline_and_explainer():
         with open("feature_columns.pkl", "rb") as f:
             feature_cols = pickle.load(f)
         
-        # Instantiate explainer here where the model is directly available
         explainer = shap.TreeExplainer(model)
-        
         return model, feature_cols, explainer, True
     except (FileNotFoundError, Exception):
         return None, None, None, False
 
-# Unpack our centralized cached ML components
 rf_model, feature_cols, explainer, model_loaded = load_ml_pipeline_and_explainer()
 
 INDICATOR_MAP = {
@@ -228,11 +220,10 @@ with tab_assessment:
                     ml_label = readiness_mapping.get(ml_pred, str(ml_pred))
                     
                     st.info(f"Classifier Inference: **{ml_label}**")
-                    
                     st.info("""
                     The sensitivity weighting structure affects only the deterministic
                     AIRI composite calculation. The machine learning classifier operates
-                    independently using the raw institutional indicator inputs.
+                    independent using the raw institutional indicator inputs.
                     """)
                     
                     st.write("**Prediction Probability Distribution:**")
@@ -247,9 +238,6 @@ with tab_assessment:
             st.warning("ML artifacts not found. Running in deterministic scoring mode only.")
             
     with col_chart:
-        # -----------------------------
-        # 1. PERFORMANCE ONLY (UNWEIGHTED)
-        # -----------------------------
         performance_df = pd.DataFrame({
             "Dimension": [
                 "Data Infrastructure",
@@ -267,9 +255,6 @@ with tab_assessment:
             ]
         })
 
-        # -----------------------------
-        # 2. WEIGHTED CONTRIBUTION
-        # -----------------------------
         weighted_df = pd.DataFrame({
             "Dimension": performance_df["Dimension"],
             "Weighted Contribution (%)": [
@@ -281,12 +266,8 @@ with tab_assessment:
             ]
         })
 
-        # -----------------------------
-        # FIGURE SETUP (DUAL PANEL)
-        # -----------------------------
         fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-        # ===== PANEL 1: PERFORMANCE =====
         sns.barplot(
             x="Performance (%)",
             y="Dimension",
@@ -300,7 +281,6 @@ with tab_assessment:
         axes[0].set_xlabel("Performance Score (%)")
         axes[0].set_ylabel("")
 
-        # ===== PANEL 2: WEIGHTED IMPACT =====
         sns.barplot(
             x="Weighted Contribution (%)",
             y="Dimension",
@@ -322,8 +302,8 @@ with tab_assessment:
 
         plt.tight_layout()
         st.pyplot(fig, clear_figure=True)
-        
         st.write("---")
+
     st.markdown("### Real-Time Local Explainability (current institution)")
     st.write("""
     This section provides an institution-specific prediction explanation utilizing SHAP metrics 
@@ -336,19 +316,15 @@ with tab_assessment:
                 "D1_Data_Quality": [d1_q1],
                 "D1_Data_Governance": [d1_q2],
                 "D1_Data_Integration": [d1_q3],
-
                 "D2_System_Capability": [d2_q1],
                 "D2_AI_Tooling": [d2_q2],
                 "D2_Infrastructure_Resilience": [d2_q3],
-
                 "D3_FCA_Alignment": [d3_q1],
                 "D3_Consumer_Duty": [d3_q2],
                 "D3_Audit_Trail": [d3_q3],
-
                 "D4_Talent_Readiness": [d4_q1],
                 "D4_Change_Management": [d4_q2],
                 "D4_Leadership_Commitment": [d4_q3],
-
                 "D5_Bias_Mitigation": [d5_q1],
                 "D5_Explainability": [d5_q2],
                 "D5_Accountability": [d5_q3]
@@ -362,8 +338,6 @@ with tab_assessment:
                 )
             else:
                 runtime_df = pd.DataFrame(active_input_dict)[feature_cols]
-
-                # Compute SHAP values
                 shap_values = explainer(runtime_df)
 
                 if hasattr(shap_values, "values") and isinstance(shap_values.values, np.ndarray):
@@ -371,36 +345,26 @@ with tab_assessment:
                         rf_model.predict(runtime_df)[0]
                     )
 
-                    # Extract SHAP tensor safely
                     shap_array = shap_values.values
 
                     if len(shap_array.shape) == 3:
-                        # Case 1: (samples, features, classes)
                         if shap_array.shape[1] == len(runtime_df.columns):
                             class_shap_values = shap_array[0, :, predicted_class_index]
-                        # Case 2: (samples, classes, features)
                         else:
                             class_shap_values = shap_array[0, predicted_class_index, :]
                     else:
-                        # Binary classification fallback
                         class_shap_values = shap_array[0]
 
-                    # ---------------------------------------------------
-                    # CLEAN AESTHETIC SHAP BAR PLOT (LIVE DATA ONLY)
-                    # ---------------------------------------------------
                     feature_names = runtime_df.columns.tolist()
                     shap_vals = class_shap_values
 
-                    # Create clean dataframe for plotting
                     shap_df = pd.DataFrame({
                         "Feature": feature_names,
                         "SHAP Value": shap_vals
                     })
 
-                    # Sort for better readability
                     shap_df = shap_df.sort_values(by="SHAP Value", key=abs)
 
-                    # Plot
                     fig, ax = plt.subplots(figsize=(9, 5))
 
                     bars = ax.barh(
@@ -408,7 +372,6 @@ with tab_assessment:
                         shap_df["SHAP Value"]
                     )
 
-                    # Styling improvements (publication-ready)
                     ax.axvline(0, color="black", linewidth=1, alpha=0.6)
                     ax.set_title(
                         "Live Institutional SHAP Feature Contribution",
@@ -419,7 +382,6 @@ with tab_assessment:
                     ax.set_xlabel("SHAP Impact on Prediction")
                     ax.set_ylabel("Governance Indicators")
 
-                    # Add value labels
                     for bar in bars:
                         width = bar.get_width()
                         ax.text(
@@ -432,12 +394,10 @@ with tab_assessment:
 
                     plt.tight_layout()
                     st.pyplot(fig, clear_figure=True)
-
                 else:
                     st.warning(
                         "Unsupported SHAP explanation format detected."
                     )
-
         except Exception as shap_err:
             st.error(
                 f"Live SHAP visualization compilation exception encountered: "
