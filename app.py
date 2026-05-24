@@ -325,7 +325,7 @@ with tab_assessment:
         st.pyplot(fig, clear_figure=True)
         
         st.write("---")
-    st.markdown("### 🔍 Real-Time Local Explainability")
+    st.markdown("### Real-Time Local Explainability (current institution)")
     st.write("""
     This section provides an institution-specific prediction explanation utilizing SHAP metrics 
     derived from the active input configurations simulated above.
@@ -511,7 +511,7 @@ with tab_performance:
         st.pyplot(fig_imp, clear_figure=True)
         
     st.write("---")
-    st.markdown("### 🌍 Global Model Explainability")
+    st.markdown("### Model-Wide Feature Attribution (trained behaviour overview)")
     try:
         st.image("shap_summary_plot.png", caption="SHAP Global Feature Importance Summary Matrix (Static Baseline Framework)")
     except Exception:
