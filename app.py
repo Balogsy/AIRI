@@ -83,8 +83,7 @@ tab_assessment, tab_performance, tab_empirical, tab_feedback = st.tabs([
 with tab_assessment:
     st.markdown("### 🛠️ Real-time Assessment Simulator")
     st.write("""
-    Adjust the institution's scoring indicators across the five AIRI dimensions 
-    below to observe real-time score calculations and exploratory machine learning predictions.
+    Users can adjust institutional scoring indicators across the five AIRI dimensions via the collapsible sidebar, enabling real-time recalculation of composite scores and machine learning predictions.
     """)
     
     st.sidebar.header("🎯 Framework Inputs (1.00 - 4.00)")
