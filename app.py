@@ -20,31 +20,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# FIXED: Combined model and explainer creation into a single cached resource block
+# This prevents Streamlit from trying to hash the complex model object as an input parameter.
 @st.cache_resource
-def load_ml_artifacts():
+def load_ml_artifacts_and_explainer():
     """
     Safely load pre-trained Random Forest and feature configuration artifacts
-    generated during the Stage 3 modelling pipeline.
+    and pre-initialize the SHAP explainer within a single cached scope.
     """
     try:
         with open("rf_airi_model.pkl", "rb") as f:
             model = pickle.load(f)
         with open("feature_columns.pkl", "rb") as f:
             feature_cols = pickle.load(f)
-        return model, feature_cols, True
-    except FileNotFoundError:
-        return None, None, False
+        
+        # Instantiate explainer here where the model is directly available
+        explainer = shap.TreeExplainer(model)
+        
+        return model, feature_cols, explainer, True
+    except (FileNotFoundError, Exception):
+        return None, None, None, False
 
-rf_model, feature_cols, model_loaded = load_ml_artifacts()
-
-# Cache the SHAP explainer resource to avoid recalculating on every rerun
-@st.cache_resource
-def load_explainer(model):
-    if model is not None:
-        return shap.TreeExplainer(model)
-    return None
-
-explainer = load_explainer(rf_model)
+rf_model, feature_cols, explainer, model_loaded = load_ml_artifacts_and_explainer()
 
 INDICATOR_MAP = {
     "D1_Data_Quality": "IND-D1-01 Data Quality Monitoring",
@@ -195,7 +192,6 @@ with tab_assessment:
             value=f"{composite_score_100:.2f}%"
         )
         
-        # Reverted to intuitive dissertation quartile bands (0-25, 26-50, 51-75, 76-100)
         if composite_score_100 >= 76:
             band = "Advanced 🚀"
         elif composite_score_100 >= 51:
@@ -205,34 +201,20 @@ with tab_assessment:
         else:
             band = "Nascent 🚨"
             
-        # Safe Streamlit implementation entirely bypassing unsafe embedded HTML string styling
         st.success(f"Deterministic Category: {band}")
         
         st.write("---")
-        
-        # Updated phrasing to safeguard academic methodologies on synthetic data sets
         st.markdown("##### ⚙️ Exploratory Predictive Classification Output")
         
         if model_loaded:
             input_dict = {
-                "D1_Data_Quality": [d1_q1],
-                "D1_Data_Governance": [d1_q2],
-                "D1_Data_Integration": [d1_q3],
-                "D2_System_Capability": [d2_q1],
-                "D2_AI_Tooling": [d2_q2],
-                "D2_Infrastructure_Resilience": [d2_q3],
-                "D3_FCA_Alignment": [d3_q1],
-                "D3_Consumer_Duty": [d3_q2],
-                "D3_Audit_Trail": [d3_q3],
-                "D4_Talent_Readiness": [d4_q1],
-                "D4_Change_Management": [d4_q2],
-                "D4_Leadership_Commitment": [d4_q3],
-                "D5_Bias_Mitigation": [d5_q1],
-                "D5_Explainability": [d5_q2],
-                "D5_Accountability": [d5_q3]
+                "D1_Data_Quality": [d1_q1], "D1_Data_Governance": [d1_q2], "D1_Data_Integration": [d1_q3],
+                "D2_System_Capability": [d2_q1], "D2_AI_Tooling": [d2_q2], "D2_Infrastructure_Resilience": [d2_q3],
+                "D3_FCA_Alignment": [d3_q1], "D3_Consumer_Duty": [d3_q2], "D3_Audit_Trail": [d3_q3],
+                "D4_Talent_Readiness": [d4_q1], "D4_Change_Management": [d4_q2], "D4_Leadership_Commitment": [d4_q3],
+                "D5_Bias_Mitigation": [d5_q1], "D5_Explainability": [d5_q2], "D5_Accountability": [d5_q3]
             }
             try:
-                # ISSUE 6 FIX: Explicit Feature Alignment Validation step
                 missing_cols = set(feature_cols) - set(input_dict.keys())
                 if missing_cols:
                     st.error(f"Missing required model inputs: {missing_cols}")
@@ -242,17 +224,11 @@ with tab_assessment:
                     ml_prob = rf_model.predict_proba(input_df)[0]
                     classes = rf_model.classes_
                     
-                    readiness_mapping = {
-                        0: "Nascent 🚨",
-                        1: "Developing ⚠️",
-                        2: "Established ✅",
-                        3: "Advanced 🚀"
-                    }
+                    readiness_mapping = {0: "Nascent 🚨", 1: "Developing ⚠️", 2: "Established ✅", 3: "Advanced 🚀"}
                     ml_label = readiness_mapping.get(ml_pred, str(ml_pred))
                     
                     st.info(f"Classifier Inference: **{ml_label}**")
                     
-                    # ISSUE 4 FIX: Inject explanatory disclaimer for structural conceptual alignment
                     st.info("""
                     The sensitivity weighting structure affects only the deterministic
                     AIRI composite calculation. The machine learning classifier operates
@@ -260,12 +236,7 @@ with tab_assessment:
                     """)
                     
                     st.write("**Prediction Probability Distribution:**")
-                    
-                    prob_df = pd.DataFrame({
-                        "Class": classes,
-                        "Probability": ml_prob
-                    })
-                    prob_df = prob_df.sort_values(by="Probability", ascending=False)
+                    prob_df = pd.DataFrame({"Class": classes, "Probability": ml_prob}).sort_values(by="Probability", ascending=False)
                     
                     for _, row in prob_df.iterrows():
                         cls_labeled = readiness_mapping.get(row["Class"], str(row["Class"]))
@@ -273,20 +244,11 @@ with tab_assessment:
             except Exception as e:
                 st.error(f"Model inference error: {e}")
         else:
-            st.warning("""
-            ML artifacts not found. 
-            Running in deterministic scoring mode only.
-            """)
+            st.warning("ML artifacts not found. Running in deterministic scoring mode only.")
             
     with col_chart:
         dim_data = pd.DataFrame({
-            "Dimension": [
-                "Data Infrastructure",
-                "Technological Maturity",
-                "Regulatory Compliance",
-                "Organisational Capability",
-                "Ethical Governance"
-            ],
+            "Dimension": ["Data Infrastructure", "Technological Maturity", "Regulatory Compliance", "Organisational Capability", "Ethical Governance"],
             "Weighted Contribution (%)": [
                 (((d1_avg - 1) / 3) * 100) * weights["D1"],
                 (((d2_avg - 1) / 3) * 100) * weights["D2"],
@@ -296,30 +258,16 @@ with tab_assessment:
             ]
         })
         fig, ax = plt.subplots(figsize=(7, 3.5))
-        sns.barplot(
-            x="Weighted Contribution (%)",
-            y="Dimension",
-            data=dim_data,
-            palette="viridis",
-            ax=ax
-        )
+        sns.barplot(x="Weighted Contribution (%)", y="Dimension", data=dim_data, palette="viridis", ax=ax)
         ax.set_xlim(0, max(dim_data["Weighted Contribution (%)"]) + 5)
         
-        # Removed arbitrary line '12' and implemented dynamic statistical Benchmark Line
         target_line = 100 / 5
-        ax.axvline(
-            target_line, 
-            color='red',
-            linestyle='--',
-            alpha=0.6,
-            label='Equal Weight Benchmark'
-        )
+        ax.axvline(target_line, color='red', linestyle='--', alpha=0.6, label='Equal Weight Benchmark')
         ax.legend()
         plt.tight_layout()
         st.pyplot(fig, clear_figure=True)
         
     st.write("---")
-    
     st.markdown("### 🔍 Real-Time Local Explainability")
     st.write("""
     This section provides an institution-specific prediction explanation utilizing SHAP metrics 
@@ -335,20 +283,14 @@ with tab_assessment:
                 "D5_Bias_Mitigation": [d5_q1], "D5_Explainability": [d5_q2], "D5_Accountability": [d5_q3]
             }
             
-            # ISSUE 6 FIX: Apply structural safety validation inside SHAP scope too
             missing_shap_cols = set(feature_cols) - set(active_input_dict.keys())
             if missing_shap_cols:
                 st.error(f"Missing required features for SHAP generation: {missing_shap_cols}")
             else:
                 runtime_df = pd.DataFrame(active_input_dict)[feature_cols]
-                
-                # Recalculate values dynamically without re-initializing the model wrapper structure
                 shap_values = explainer(runtime_df)
                 
-                # Preempted memory leaks and structural overlap issues by stripping fig, ax = subplots()
                 plt.figure(figsize=(8, 4))
-                
-                # ISSUE 2 FIX: Robust type configuration parsing handler for cross-version Multiclass Random Forest TreeExplainers
                 if isinstance(shap_values.values, np.ndarray):
                     shap.plots.bar(shap_values[0], show=False)
                 else:
@@ -368,40 +310,16 @@ with tab_assessment:
     col_rem1, col_rem2 = st.columns(2)
     with col_rem1:
         if d3_q2 < 3.0:
-            st.error(f"""
-            ⚠️ Critical Consumer Duty Deficit 
-            ({INDICATOR_MAP['D3_Consumer_Duty']}):
-            
-            The institution demonstrates insufficient auditing for consumer
-            outcomes. Prioritise stronger monitoring and governance controls.
-            """)
+            st.error(f"⚠️ Critical Consumer Duty Deficit ({INDICATOR_MAP['D3_Consumer_Duty']}): The institution demonstrates insufficient auditing for consumer outcomes. Prioritise stronger monitoring and governance controls.")
         if d5_q1 < 3.0:
-            st.error(f"""
-            ⚠️ Ethical Risk Alert 
-            ({INDICATOR_MAP['D5_Bias_Mitigation']}):
-            
-            Bias mitigation mechanisms appear underdeveloped relative to
-            expected governance standards.
-            """)
+            st.error(f"⚠️ Ethical Risk Alert ({INDICATOR_MAP['D5_Bias_Mitigation']}): Bias mitigation mechanisms appear underdeveloped relative to expected governance standards.")
     with col_rem2:
         if d1_q2 < 3.0:
-            st.warning(f"""
-            💡 Data Infrastructure Advisory 
-            ({INDICATOR_MAP['D1_Data_Governance']}):
-            
-            Data lineage and provenance mapping structures appear weak.
-            Consider implementing clearer governance tracing procedures.
-            """)
+            st.warning(f"💡 Data Infrastructure Advisory ({INDICATOR_MAP['D1_Data_Governance']}): Data lineage and provenance mapping structures appear weak. Consider implementing clearer governance tracing procedures.")
         if d4_q1 >= 3.0 and d2_q2 < 2.5:
-            st.info("""
-            💡 Operational Balance Note:
-            
-            Organisational readiness appears stronger than automated tooling
-            maturity. Additional workflow automation may improve alignment.
-            """)
+            st.info("💡 Operational Balance Note: Organisational readiness appears stronger than automated tooling maturity. Additional workflow automation may improve alignment.")
 
 with tab_performance:
-    # ISSUE 1 FIX: Mandatory academic warning box deployed at performance tab entry root
     st.warning("""
     These performance metrics are exploratory and derived from synthetic,
     expert-guided simulation data rather than operational institutional datasets.
@@ -410,28 +328,12 @@ with tab_performance:
     """)
 
     st.markdown("### 🔬 Exploratory Readiness Classification Model Metrics")
-    st.write("""
-    Below are the benchmark metrics derived from the Stage 3 modelling pipeline,
-    comparing the exploratory classification approaches evaluated during the study.
-    """)
     col_m1, col_m2 = st.columns(2)
     with col_m1:
         st.markdown("#### 🌲 Random Forest Classifier (Selected Model)")
         rf_metrics_df = pd.DataFrame({
-            "Evaluation Parameter": [
-                "Global Accuracy",
-                "Weighted F1-Score",
-                "Macro F1-Score",
-                "Cohen's Kappa",
-                "Root Mean Squared Error (RMSE)"
-            ],
-            "Value": [
-                "0.940",
-                "0.939",
-                "0.860",
-                "0.892",
-                "0.245"
-            ]
+            "Evaluation Parameter": ["Global Accuracy", "Weighted F1-Score", "Macro F1-Score", "Cohen's Kappa", "Root Mean Squared Error (RMSE)"],
+            "Value": ["0.940", "0.939", "0.860", "0.892", "0.245"]
         })
         st.dataframe(rf_metrics_df, use_container_width=True)
         st.markdown("##### Classification Performance Breakdown")
@@ -445,20 +347,8 @@ with tab_performance:
     with col_m2:
         st.markdown("#### ⚡ XGBoost Classifier (Baseline Model)")
         xgb_metrics_df = pd.DataFrame({
-            "Evaluation Parameter": [
-                "Global Accuracy",
-                "Weighted F1-Score",
-                "Macro F1-Score",
-                "Cohen's Kappa",
-                "Root Mean Squared Error (RMSE)"
-            ],
-            "Value": [
-                "0.900",
-                "0.896",
-                "0.779",
-                "0.817",
-                "0.316"
-            ]
+            "Evaluation Parameter": ["Global Accuracy", "Weighted F1-Score", "Macro F1-Score", "Cohen's Kappa", "Root Mean Squared Error (RMSE)"],
+            "Value": ["0.900", "0.896", "0.779", "0.817", "0.316"]
         })
         st.dataframe(xgb_metrics_df, use_container_width=True)
         st.markdown("##### Illustrative Feature Importance Distribution")
@@ -470,23 +360,13 @@ with tab_performance:
             {"Feature Component": "D4_Change_Management", "Random Forest Contribution": 0.0759, "XGBoost Contribution": 0.0574}
         ])
         fig_imp, ax_imp = plt.subplots(figsize=(6, 3))
-        sns.barplot(
-            x="Random Forest Contribution",
-            y="Feature Component",
-            data=feat_imp_df,
-            palette="magma",
-            ax=ax_imp
-        )
+        sns.barplot(x="Random Forest Contribution", y="Feature Component", data=feat_imp_df, palette="magma", ax=ax_imp)
         plt.title("Illustrative Feature Importance Ranking")
         plt.tight_layout()
         st.pyplot(fig_imp, clear_figure=True)
         
     st.write("---")
     st.markdown("### 🌍 Global Model Explainability")
-    st.write("""
-    This baseline graphic reflects overall features impact, showing baseline variables 
-    influence across global model training operations.
-    """)
     try:
         st.image("shap_summary_plot.png", caption="SHAP Global Feature Importance Summary Matrix (Static Baseline Framework)")
     except Exception:
@@ -494,14 +374,10 @@ with tab_performance:
 
 with tab_empirical:
     st.markdown("### 📈 Pre-Deployment Verification Analysis of Expert Panels")
-    st.write("""
-    This section presents the statistical validation properties associated
-    with the Stage 1 expert review process (N = 120 respondents).
-    """)
     col_e1, col_e2, col_e3 = st.columns(3)
-    col_e1.metric("Fleiss' Kappa Reliability", "0.97", help="Indicates strong expert consensus.")
-    col_e2.metric("S-CVI / Average Score", "0.934", help="Scale Content Validity Index.")
-    col_e3.metric("Indicators Cronbach Alpha", "0.91", help="Internal consistency reliability.")
+    col_e1.metric("Fleiss' Kappa Reliability", "0.97")
+    col_e2.metric("S-CVI / Average Score", "0.934")
+    col_e3.metric("Indicators Cronbach Alpha", "0.91")
     st.markdown("#### Content Validity Index (I-CVI) Matrix")
     cvi_df = pd.DataFrame([
         {"Indicator ID": "IND-D1-01", "Description": "Data Quality Systematic Monitoring", "I-CVI": 0.833, "Mean Relevance": 3.317},
@@ -524,15 +400,9 @@ with tab_empirical:
 
 with tab_feedback:
     st.markdown("### 🧪 Stage 5 Expert Interaction & Evaluation")
-    st.write("""
-    This section captures expert feedback following direct interaction with the AIRI dashboard.
-    The model underlying this system is trained on synthetic data guided by expert-derived constructs.
-    This stage evaluates perceived usability, interpretability, and governance usefulness.
-    """)
-    
     st.text_input("Expert ID (optional)", key="expert_id")
-    
     st.markdown("## 📊 System Usability Scale (SUS) – AIRI Adapted")
+    
     sus_q = {}
     sus_questions = [
         "I think I would like to use the AIRI dashboard frequently in my organisation.",
@@ -547,13 +417,7 @@ with tab_feedback:
         "I needed to learn a lot before I could use the system."
     ]
     for i, q in enumerate(sus_questions, start=1):
-        sus_q[i] = st.radio(
-            f"SUS {i}. {q}",
-            [1, 2, 3, 4, 5],
-            horizontal=True,
-            index=2,
-            key=f"sus_radio_{i}"
-        )
+        sus_q[i] = st.radio(f"SUS {i}. {q}", [1, 2, 3, 4, 5], horizontal=True, index=2, key=f"sus_radio_{i}")
         
     sus_score = 0
     for i in range(1, 11):
@@ -563,6 +427,7 @@ with tab_feedback:
             sus_score += 5 - sus_q[i]
     sus_total = sus_score * 2.5
     st.metric("System Usability Scale (SUS) Score", f"{sus_total:.2f} / 100")
+    
     if sus_total >= 80:
         st.success("Excellent perceived usability")
     elif sus_total >= 68:
@@ -572,80 +437,52 @@ with tab_feedback:
         
     st.markdown("---")
     st.markdown("## 👑 Thematic Evaluation (Expert Reflection)")
-    st.markdown("### Core Usability & Interpretation")
     t1 = st.text_area("1. How easy was it to understand the AIRI dashboard and its outputs?")
     t2 = st.text_area("2. Which component was most useful (sliders, ML prediction, score, charts) and why?")
     t3 = st.text_area("3. Did the AIRI score and ML prediction align with your expectations? Explain.")
-    
-    st.markdown("### Governance & Decision Usefulness")
     t4 = st.text_area("4. How useful is the dashboard for governance or compliance decisions (e.g. FCA alignment, Consumer Duty)?")
     t5 = st.text_area("5. What limitations did you observe for real-world institutional use?")
-    
-    st.markdown("### Trust & Explainability")
     t6 = st.text_area("6. How confident are you in the ML-generated predictions?")
     t7 = st.text_area("7. What would improve your trust or understanding of the system?")
-    st.markdown("---")
     
     if st.button("Save Expert Feedback"):
         feedback_df = pd.DataFrame([{
-            "Expert_ID": st.session_state.get("expert_id", "anonymous"),
-            "SUS_Score": sus_total,
-            "Q1": sus_q[1], "Q2": sus_q[2], "Q3": sus_q[3], "Q4": sus_q[4],
-            "Q5": sus_q[5], "Q6": sus_q[6], "Q7": sus_q[7], "Q8": sus_q[8],
-            "Q9": sus_q[9], "Q10": sus_q[10],
-            "T1": t1, "T2": t2, "T3": t3,
-            "T4": t4, "T5": t5,
-            "T6": t6, "T7": t7
+            "Expert_ID": st.session_state.get("expert_id", "anonymous"), "SUS_Score": sus_total,
+            "Q1": sus_q[1], "Q2": sus_q[2], "Q3": sus_q[3], "Q4": sus_q[4], "Q5": sus_q[5],
+            "Q6": sus_q[6], "Q7": sus_q[7], "Q8": sus_q[8], "Q9": sus_q[9], "Q10": sus_q[10],
+            "T1": t1, "T2": t2, "T3": t3, "T4": t4, "T5": t5, "T6": t6, "T7": t7
         }])
 
         file_path = "airi_expert_feedback_master.csv"
-
-        # ISSUE 5 FIX: Wrap CSV append functions using explicit cross-thread synchronization locking mechanisms
         with lock:
             if os.path.exists(file_path):
                 feedback_df.to_csv(file_path, mode="a", header=False, index=False)
             else:
                 feedback_df.to_csv(file_path, index=False)
-
         st.success("Feedback saved successfully!")
 
     st.write("---")
     with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
         admin_password = st.text_input("Enter Admin Password to access data management tools", type="password")
-        
-        # Eliminated vulnerability fallback entirely by checking missing environment variable variables safely
         ADMIN_PASSWORD = os.getenv("AIRI_ADMIN_PASSWORD")
         
         if ADMIN_PASSWORD is None:
             st.error("Admin password environment variable configuration is missing.")
         elif admin_password == ADMIN_PASSWORD: 
             file_path = "airi_expert_feedback_master.csv"
-            
             if os.path.exists(file_path):
                 master_df = pd.read_csv(file_path)
-                
                 st.markdown(f"**Total Expert Responses Collected:** `{len(master_df)}`")
                 if len(master_df) > 0:
                     st.metric("Average Evaluated SUS Score", f"{master_df['SUS_Score'].mean():.2f} / 100")
-                
                 st.dataframe(master_df, use_container_width=True)
+                
                 st.write("---")
                 st.markdown("#### 🗑️ Delete Feedback Entries")
-                
                 if len(master_df) > 0:
-                    row_to_delete = st.number_input(
-                        "Enter the Row Index number you want to remove:", 
-                        min_value=0, 
-                        max_value=len(master_df)-1, 
-                        step=1
-                    )
-                    
-                    target_id = master_df.iloc[row_to_delete].get("Expert_ID", "anonymous")
-                    st.warning(f"Target row preview: Index `{row_to_delete}` | Expert ID: `{target_id}`")
-                    
-                    confirm_delete = st.checkbox("I confirm that I want to permanently delete this row.")
-                    
-                    if confirm_delete:
+                    row_to_delete = st.number_input("Enter the Row Index number you want to remove:", min_value=0, max_value=len(master_df)-1, step=1)
+                    st.warning(f"Target row preview: Index `{row_to_delete}` | Expert ID: `{master_df.iloc[row_to_delete].get('Expert_ID', 'anonymous')}`")
+                    if st.checkbox("I confirm that I want to permanently delete this row."):
                         if st.button("🔴 Permanently Delete Selected Row", type="primary"):
                             with lock:
                                 master_df = master_df.drop(master_df.index[row_to_delete])
