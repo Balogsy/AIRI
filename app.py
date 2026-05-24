@@ -6,6 +6,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import shap  
+import threading
+
+# ISSUE 3 FIX: Establish global random seed for academic reproducibility
+np.random.seed(42)
+
+# ISSUE 5 FIX: Initialize threading lock to eliminate CSV write corruption risks
+lock = threading.Lock()
 
 st.set_page_config(
     page_title="AIRI Governance Dashboard",
@@ -29,6 +36,15 @@ def load_ml_artifacts():
         return None, None, False
 
 rf_model, feature_cols, model_loaded = load_ml_artifacts()
+
+# Cache the SHAP explainer resource to avoid recalculating on every rerun
+@st.cache_resource
+def load_explainer(model):
+    if model is not None:
+        return shap.TreeExplainer(model)
+    return None
+
+explainer = load_explainer(rf_model)
 
 INDICATOR_MAP = {
     "D1_Data_Quality": "IND-D1-01 Data Quality Monitoring",
@@ -59,7 +75,6 @@ for MSc Information Technology dissertation purposes.
 The machine learning outputs are exploratory and based on synthetic institutional readiness data.
 """)
 
-# Rearranged tabs to make Pre-Deployment Analysis the 3rd panel
 tab_assessment, tab_performance, tab_empirical, tab_feedback = st.tabs([
     "📊 Institutional Assessment Tool",
     "⚙️ ML Engine Evaluation Metrics",
@@ -106,9 +121,6 @@ with tab_assessment:
     d4_avg = np.mean([d4_q1, d4_q2, d4_q3])
     d5_avg = np.mean([d5_q1, d5_q2, d5_q3])
     
-    # ============================================================
-    # AIRI WEIGHTING STRUCTURE + SENSITIVITY ANALYSIS (Now Properly Scoped)
-    # ============================================================
     st.markdown("### AIRI Dynamic Sensitivity Weighting Structure")
     st.write("Adjust the raw slider allocations below to automatically normalize and evaluate alternative risk structures.")
     
@@ -126,7 +138,7 @@ with tab_assessment:
         
     total_w = w1 + w2 + w3 + w4 + w5
     if total_w == 0:
-        total_w = 1.0  # Prevent ZeroDivisionErrors
+        total_w = 1.0
         
     weights = {
         "D1": w1 / total_w,
@@ -182,26 +194,24 @@ with tab_assessment:
             label="Calculated Composite AIRI Score",
             value=f"{composite_score_100:.2f}%"
         )
-        if composite_score_100 >= 80:
-            band, color = "Advanced 🚀", "green"
-        elif composite_score_100 >= 60:
-            band, color = "Established ✅", "blue"
-        elif composite_score_100 >= 40:
-            band, color = "Developing ⚠️", "orange"
+        
+        # Reverted to intuitive dissertation quartile bands (0-25, 26-50, 51-75, 76-100)
+        if composite_score_100 >= 76:
+            band = "Advanced 🚀"
+        elif composite_score_100 >= 51:
+            band = "Established ✅"
+        elif composite_score_100 >= 26:
+            band = "Developing ⚠️"
         else:
-            band, color = "Nascent 🚨", "red"
+            band = "Nascent 🚨"
             
-        st.markdown(
-            f"""
-            Deterministic Category:
-            <span style='color:{color}; font-weight:bold; font-size:20px;'>
-            {band}
-            </span>
-            """,
-            unsafe_allow_html=True
-        )
+        # Safe Streamlit implementation entirely bypassing unsafe embedded HTML string styling
+        st.success(f"Deterministic Category: {band}")
+        
         st.write("---")
-        st.markdown("##### ⚙️ Machine Learning Layer Prediction")
+        
+        # Updated phrasing to safeguard academic methodologies on synthetic data sets
+        st.markdown("##### ⚙️ Exploratory Predictive Classification Output")
         
         if model_loaded:
             input_dict = {
@@ -222,32 +232,44 @@ with tab_assessment:
                 "D5_Accountability": [d5_q3]
             }
             try:
-                input_df = pd.DataFrame(input_dict)[feature_cols]
-                ml_pred = rf_model.predict(input_df)[0]
-                ml_prob = rf_model.predict_proba(input_df)[0]
-                classes = rf_model.classes_
-                
-                readiness_mapping = {
-                    0: "Nascent 🚨",
-                    1: "Developing ⚠️",
-                    2: "Established ✅",
-                    3: "Advanced 🚀"
-                }
-                ml_label = readiness_mapping.get(ml_pred, str(ml_pred))
-                
-                st.info(f"Random Forest Classifier Output: **{ml_label}**")
-                st.write("**Prediction Probability Distribution:**")
-                
-                # Corrected Issue 7: Probability Distribution Ordering
-                prob_df = pd.DataFrame({
-                    "Class": classes,
-                    "Probability": ml_prob
-                })
-                prob_df = prob_df.sort_values(by="Probability", ascending=False)
-                
-                for _, row in prob_df.iterrows():
-                    cls_labeled = readiness_mapping.get(row["Class"], str(row["Class"]))
-                    st.caption(f"{cls_labeled}: {row['Probability']*100:.1f}%")
+                # ISSUE 6 FIX: Explicit Feature Alignment Validation step
+                missing_cols = set(feature_cols) - set(input_dict.keys())
+                if missing_cols:
+                    st.error(f"Missing required model inputs: {missing_cols}")
+                else:
+                    input_df = pd.DataFrame(input_dict)[feature_cols]
+                    ml_pred = rf_model.predict(input_df)[0]
+                    ml_prob = rf_model.predict_proba(input_df)[0]
+                    classes = rf_model.classes_
+                    
+                    readiness_mapping = {
+                        0: "Nascent 🚨",
+                        1: "Developing ⚠️",
+                        2: "Established ✅",
+                        3: "Advanced 🚀"
+                    }
+                    ml_label = readiness_mapping.get(ml_pred, str(ml_pred))
+                    
+                    st.info(f"Classifier Inference: **{ml_label}**")
+                    
+                    # ISSUE 4 FIX: Inject explanatory disclaimer for structural conceptual alignment
+                    st.info("""
+                    The sensitivity weighting structure affects only the deterministic
+                    AIRI composite calculation. The machine learning classifier operates
+                    independently using the raw institutional indicator inputs.
+                    """)
+                    
+                    st.write("**Prediction Probability Distribution:**")
+                    
+                    prob_df = pd.DataFrame({
+                        "Class": classes,
+                        "Probability": ml_prob
+                    })
+                    prob_df = prob_df.sort_values(by="Probability", ascending=False)
+                    
+                    for _, row in prob_df.iterrows():
+                        cls_labeled = readiness_mapping.get(row["Class"], str(row["Class"]))
+                        st.caption(f"{cls_labeled}: {row['Probability']*100:.1f}%")
             except Exception as e:
                 st.error(f"Model inference error: {e}")
         else:
@@ -281,27 +303,29 @@ with tab_assessment:
             palette="viridis",
             ax=ax
         )
-        # Corrected Issue 3: Make the axis adaptive and statistically honest
         ax.set_xlim(0, max(dim_data["Weighted Contribution (%)"]) + 5)
+        
+        # Removed arbitrary line '12' and implemented dynamic statistical Benchmark Line
+        target_line = 100 / 5
         ax.axvline(
-            12, 
+            target_line, 
             color='red',
             linestyle='--',
             alpha=0.6,
-            label='Target Allocation Mark'
+            label='Equal Weight Benchmark'
         )
+        ax.legend()
         plt.tight_layout()
-        st.pyplot(fig)
+        st.pyplot(fig, clear_figure=True)
         
     st.write("---")
     
-    # Corrected Issue 2 & 5: Live Real-Time Local Explainability Container inside Tab 1
     st.markdown("### 🔍 Real-Time Local Explainability")
     st.write("""
     This section provides an institution-specific prediction explanation utilizing SHAP metrics 
     derived from the active input configurations simulated above.
     """)
-    if model_loaded:
+    if model_loaded and explainer is not None:
         try:
             active_input_dict = {
                 "D1_Data_Quality": [d1_q1], "D1_Data_Governance": [d1_q2], "D1_Data_Integration": [d1_q3],
@@ -310,19 +334,30 @@ with tab_assessment:
                 "D4_Talent_Readiness": [d4_q1], "D4_Change_Management": [d4_q2], "D4_Leadership_Commitment": [d4_q3],
                 "D5_Bias_Mitigation": [d5_q1], "D5_Explainability": [d5_q2], "D5_Accountability": [d5_q3]
             }
-            runtime_df = pd.DataFrame(active_input_dict)[feature_cols]
             
-            # Corrected Issue 2 & 4: Modern TreeExplainer structural integration for single case
-            explainer = shap.TreeExplainer(rf_model)
-            shap_values = explainer(runtime_df)
-            
-            fig_shap, ax_shap = plt.subplots(figsize=(8, 4))
-            # Pick index 0 for single instance case observation output
-            shap.plots.bar(shap_values[0], show=False)
-            plt.title("Live Local Feature Contribution (Single-Case SHAP Bar Plot)")
-            plt.tight_layout()
-            st.pyplot(plt.gcf(), clear_figure=True)
-            
+            # ISSUE 6 FIX: Apply structural safety validation inside SHAP scope too
+            missing_shap_cols = set(feature_cols) - set(active_input_dict.keys())
+            if missing_shap_cols:
+                st.error(f"Missing required features for SHAP generation: {missing_shap_cols}")
+            else:
+                runtime_df = pd.DataFrame(active_input_dict)[feature_cols]
+                
+                # Recalculate values dynamically without re-initializing the model wrapper structure
+                shap_values = explainer(runtime_df)
+                
+                # Preempted memory leaks and structural overlap issues by stripping fig, ax = subplots()
+                plt.figure(figsize=(8, 4))
+                
+                # ISSUE 2 FIX: Robust type configuration parsing handler for cross-version Multiclass Random Forest TreeExplainers
+                if isinstance(shap_values.values, np.ndarray):
+                    shap.plots.bar(shap_values[0], show=False)
+                else:
+                    st.warning("SHAP output format unsupported for this model configuration.")
+                    
+                plt.title("Live Local Feature Contribution (Single-Case SHAP Bar Plot)")
+                plt.tight_layout()
+                st.pyplot(plt.gcf(), clear_figure=True)
+                
         except Exception as shap_err:
             st.error(f"Live SHAP visualization compilation exception encountered: {shap_err}")
     else:
@@ -365,8 +400,15 @@ with tab_assessment:
             maturity. Additional workflow automation may improve alignment.
             """)
 
-# Linked to tab_performance (Tab 2)
 with tab_performance:
+    # ISSUE 1 FIX: Mandatory academic warning box deployed at performance tab entry root
+    st.warning("""
+    These performance metrics are exploratory and derived from synthetic,
+    expert-guided simulation data rather than operational institutional datasets.
+    The outputs should therefore be interpreted as proof-of-concept validation
+    rather than production-grade predictive performance.
+    """)
+
     st.markdown("### 🔬 Exploratory Readiness Classification Model Metrics")
     st.write("""
     Below are the benchmark metrics derived from the Stage 3 modelling pipeline,
@@ -437,10 +479,9 @@ with tab_performance:
         )
         plt.title("Illustrative Feature Importance Ranking")
         plt.tight_layout()
-        st.pyplot(fig_imp)
+        st.pyplot(fig_imp, clear_figure=True)
         
     st.write("---")
-    # Corrected Issue 5: Renamed to Global Model Explainability to delineate context clearly
     st.markdown("### 🌍 Global Model Explainability")
     st.write("""
     This baseline graphic reflects overall features impact, showing baseline variables 
@@ -451,7 +492,6 @@ with tab_performance:
     except Exception:
         st.info("Static global SHAP summary graphic asset could not be accessed at this time.")
 
-# Linked to tab_empirical (Tab 3)
 with tab_empirical:
     st.markdown("### 📈 Pre-Deployment Verification Analysis of Expert Panels")
     st.write("""
@@ -482,7 +522,6 @@ with tab_empirical:
     ])
     st.dataframe(cvi_df, use_container_width=True)
 
-# Linked to tab_feedback (Tab 4)
 with tab_feedback:
     st.markdown("### 🧪 Stage 5 Expert Interaction & Evaluation")
     st.write("""
@@ -561,22 +600,25 @@ with tab_feedback:
 
         file_path = "airi_expert_feedback_master.csv"
 
-        if os.path.exists(file_path):
-            feedback_df.to_csv(file_path, mode="a", header=False, index=False)
-        else:
-            feedback_df.to_csv(file_path, index=False)
+        # ISSUE 5 FIX: Wrap CSV append functions using explicit cross-thread synchronization locking mechanisms
+        with lock:
+            if os.path.exists(file_path):
+                feedback_df.to_csv(file_path, mode="a", header=False, index=False)
+            else:
+                feedback_df.to_csv(file_path, index=False)
 
         st.success("Feedback saved successfully!")
 
-    # ADMIN SECURE VIEW 
     st.write("---")
     with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
         admin_password = st.text_input("Enter Admin Password to access data management tools", type="password")
         
-        # Corrected Issue 6: Hardened Secure Profile Using Environment Variable Strategy
-        ADMIN_PASSWORD = os.getenv("AIRI_ADMIN_PASSWORD", "admin123")
+        # Eliminated vulnerability fallback entirely by checking missing environment variable variables safely
+        ADMIN_PASSWORD = os.getenv("AIRI_ADMIN_PASSWORD")
         
-        if admin_password == ADMIN_PASSWORD: 
+        if ADMIN_PASSWORD is None:
+            st.error("Admin password environment variable configuration is missing.")
+        elif admin_password == ADMIN_PASSWORD: 
             file_path = "airi_expert_feedback_master.csv"
             
             if os.path.exists(file_path):
@@ -605,6 +647,7 @@ with tab_feedback:
                     
                     if confirm_delete:
                         if st.button("🔴 Permanently Delete Selected Row", type="primary"):
-                            master_df = master_df.drop(master_df.index[row_to_delete])
-                            master_df.to_csv(file_path, index=False)
+                            with lock:
+                                master_df = master_df.drop(master_df.index[row_to_delete])
+                                master_df.to_csv(file_path, index=False)
                             st.success(f"Row {row_to_delete} has been deleted successfully! Please refresh application window.")
