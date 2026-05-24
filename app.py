@@ -293,7 +293,13 @@ with tab_assessment:
                 
                 plt.figure(figsize=(8, 4))
                 if isinstance(shap_values.values, np.ndarray):
-                    shap.plots.bar(shap_values[0], show=False)
+                    explanation = shap.Explanation(
+                        values=shap_values.values[0],
+                        base_values=shap_values.base_values[0],
+                        data=runtime_df.iloc[0],
+                        feature_names=runtime_df.columns
+                    )
+                    shap.plots.bar(explanation, show=False)
                 else:
                     st.warning("SHAP output format unsupported for this model configuration.")
                     
