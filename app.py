@@ -513,7 +513,7 @@ with tab_performance:
     st.write("---")
     st.markdown("### Model-Wide Feature Attribution (trained behaviour overview)")
     try:
-        st.image("shap_summary_plot.png", caption="SHAP Global Feature Importance Summary Matrix (Static Baseline Framework)")
+        st.image("shap_summary_plot.png", caption="SHAP Model-Wide Feature Importance Summary Matrix (Static Baseline Framework)")
     except Exception:
         st.info("Static global SHAP summary graphic asset could not be accessed at this time.")
 
