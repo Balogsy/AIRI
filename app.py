@@ -595,6 +595,13 @@ with tab_feedback:
                         "Average Evaluated SUS Score",
                         f"{master_df['SUS_Score'].mean():.2f} / 100"
                     )
+                    csv_data = master_df.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 Download Master Feedback as CSV",
+                        data=csv_data,
+                        file_name="airi_expert_feedback_master.csv",
+                        mime="text/csv"
+                    )
 
                 st.dataframe(master_df, use_container_width=True)
 
