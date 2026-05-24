@@ -20,10 +20,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# FIXED: Combined model and explainer creation into a single cached resource block
-# This prevents Streamlit from trying to hash the complex model object as an input parameter.
+# FIXED: Integrated all model, feature configuration, and SHAP explainer configurations 
+# into a single cached block to guarantee thread safety and prevent hashing issues.
 @st.cache_resource
-def load_ml_artifacts_and_explainer():
+def load_ml_pipeline_and_explainer():
     """
     Safely load pre-trained Random Forest and feature configuration artifacts
     and pre-initialize the SHAP explainer within a single cached scope.
@@ -41,7 +41,8 @@ def load_ml_artifacts_and_explainer():
     except (FileNotFoundError, Exception):
         return None, None, None, False
 
-rf_model, feature_cols, explainer, model_loaded = load_ml_artifacts_and_explainer()
+# Unpack our centralized cached ML components
+rf_model, feature_cols, explainer, model_loaded = load_ml_pipeline_and_explainer()
 
 INDICATOR_MAP = {
     "D1_Data_Quality": "IND-D1-01 Data Quality Monitoring",
