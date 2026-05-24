@@ -505,7 +505,7 @@ with tab_empirical:
 with tab_feedback:
     st.markdown("### 🧪 Stage 5 Expert Interaction & Evaluation")
     st.text_input("Expert ID (optional)", key="expert_id")
-    st.markdown("## 📊 System Usability Scale (SUS) – AIRI Adapted")
+    st.markdown("## System Usability Scale (SUS) – AIRI Adapted")
     
     sus_q = {}
     sus_questions = [
@@ -540,7 +540,7 @@ with tab_feedback:
         st.warning("Usability may require refinement")
         
     st.markdown("---")
-    st.markdown("## 👑 Thematic Evaluation (Expert Reflection)")
+    st.markdown("## Thematic Evaluation (Expert Reflection)")
     t1 = st.text_area("1. How easy was it to understand the AIRI dashboard and its outputs?")
     t2 = st.text_area("2. Which component was most useful (sliders, ML prediction, score, charts) and why?")
     t3 = st.text_area("3. Did the AIRI score and ML prediction align with your expectations? Explain.")
@@ -568,7 +568,7 @@ with tab_feedback:
     st.write("---")
     with st.expander("🔐 Admin View: Review & Manage Master Feedback"):
         admin_password = st.text_input("Enter Admin Password to access data management tools", type="password")
-        ADMIN_PASSWORD = os.getenv("AIRI_ADMIN_PASSWORD")
+        ADMIN_PASSWORD = os.getenv("1234")
         
         if ADMIN_PASSWORD is None:
             st.error("Admin password environment variable configuration is missing.")
