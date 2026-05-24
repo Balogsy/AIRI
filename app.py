@@ -573,7 +573,10 @@ with tab_feedback:
         )
 
         ADMIN_PASSWORD = os.getenv("AIRI_ADMIN_PASSWORD")
-        -
+
+        # -------------------------------
+        # ACCESS CONTROL LOGIC (FIXED)
+        # -------------------------------
         if ADMIN_PASSWORD is None:
             st.error("Admin password is not configured in environment variables.")
 
@@ -592,6 +595,7 @@ with tab_feedback:
                         "Average Evaluated SUS Score",
                         f"{master_df['SUS_Score'].mean():.2f} / 100"
                     )
+
                 st.dataframe(master_df, use_container_width=True)
 
                 st.write("---")
@@ -604,10 +608,12 @@ with tab_feedback:
                         max_value=len(master_df)-1,
                         step=1
                     )
+
                     st.warning(
                         f"Target row preview: Index `{row_to_delete}` | "
                         f"Expert ID: `{master_df.iloc[row_to_delete].get('Expert_ID', 'anonymous')}`"
                     )
+
                     if st.checkbox("I confirm that I want to permanently delete this row."):
                         if st.button("🔴 Permanently Delete Selected Row", type="primary"):
                             with lock:
@@ -616,5 +622,6 @@ with tab_feedback:
                             st.success("Row deleted successfully. Refresh app.")
 
         else:
+            # Only show error if user actually tried
             if admin_password:
                 st.error("Incorrect password.")
