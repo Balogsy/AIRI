@@ -268,49 +268,143 @@ with tab_assessment:
         plt.tight_layout()
         st.pyplot(fig, clear_figure=True)
         
-    st.write("---")
+        st.write("---")
     st.markdown("### 🔍 Real-Time Local Explainability")
     st.write("""
     This section provides an institution-specific prediction explanation utilizing SHAP metrics 
     derived from the active input configurations simulated above.
     """)
+
     if model_loaded and explainer is not None:
+
         try:
+
             active_input_dict = {
-                "D1_Data_Quality": [d1_q1], "D1_Data_Governance": [d1_q2], "D1_Data_Integration": [d1_q3],
-                "D2_System_Capability": [d2_q1], "D2_AI_Tooling": [d2_q2], "D2_Infrastructure_Resilience": [d2_q3],
-                "D3_FCA_Alignment": [d3_q1], "D3_Consumer_Duty": [d3_q2], "D3_Audit_Trail": [d3_q3],
-                "D4_Talent_Readiness": [d4_q1], "D4_Change_Management": [d4_q2], "D4_Leadership_Commitment": [d4_q3],
-                "D5_Bias_Mitigation": [d5_q1], "D5_Explainability": [d5_q2], "D5_Accountability": [d5_q3]
+                "D1_Data_Quality": [d1_q1],
+                "D1_Data_Governance": [d1_q2],
+                "D1_Data_Integration": [d1_q3],
+
+                "D2_System_Capability": [d2_q1],
+                "D2_AI_Tooling": [d2_q2],
+                "D2_Infrastructure_Resilience": [d2_q3],
+
+                "D3_FCA_Alignment": [d3_q1],
+                "D3_Consumer_Duty": [d3_q2],
+                "D3_Audit_Trail": [d3_q3],
+
+                "D4_Talent_Readiness": [d4_q1],
+                "D4_Change_Management": [d4_q2],
+                "D4_Leadership_Commitment": [d4_q3],
+
+                "D5_Bias_Mitigation": [d5_q1],
+                "D5_Explainability": [d5_q2],
+                "D5_Accountability": [d5_q3]
             }
-            
+
             missing_shap_cols = set(feature_cols) - set(active_input_dict.keys())
+
             if missing_shap_cols:
-                st.error(f"Missing required features for SHAP generation: {missing_shap_cols}")
+
+                st.error(
+                    f"Missing required features for SHAP generation: {missing_shap_cols}"
+                )
+
             else:
+
                 runtime_df = pd.DataFrame(active_input_dict)[feature_cols]
+
+                # Compute SHAP values
                 shap_values = explainer(runtime_df)
-                
+
                 plt.figure(figsize=(8, 4))
-                if isinstance(shap_values.values, np.ndarray):
-                    explanation = shap.Explanation(
-                        values=shap_values.values[0],
-                        base_values=shap_values.base_values[0],
-                        data=runtime_df.iloc[0],
-                        feature_names=runtime_df.columns
+
+                if hasattr(shap_values, "values") and isinstance(shap_values.values, np.ndarray):
+
+                    predicted_class_index = int(
+                        rf_model.predict(runtime_df)[0]
                     )
+
+                    # Extract SHAP tensor safely
+                    shap_array = shap_values.values
+
+                    if len(shap_array.shape) == 3:
+
+                        # Case 1:
+                        # (samples, features, classes)
+                        if shap_array.shape[1] == len(runtime_df.columns):
+
+                            class_shap_values = (
+                                shap_array[0, :, predicted_class_index]
+                            )
+
+                        # Case 2:
+                        # (samples, classes, features)
+                        else:
+
+                            class_shap_values = (
+                                shap_array[0, predicted_class_index, :]
+                            )
+
+                    else:
+
+                        # Binary classification fallback
+                        class_shap_values = shap_array[0]
+
+                    # Safe base value extraction
+                    base_vals = shap_values.base_values
+
+                    if isinstance(base_vals[0], np.ndarray):
+
+                        class_base_value = (
+                            base_vals[0][predicted_class_index]
+                        )
+
+                    else:
+
+                        class_base_value = base_vals[0]
+
+                    # Construct explanation object
+                    explanation = shap.Explanation(
+                        values=class_shap_values,
+                        base_values=class_base_value,
+                        data=runtime_df.iloc[0].values,
+                        feature_names=runtime_df.columns.tolist()
+                    )
+
+                    # Render SHAP bar plot
                     shap.plots.bar(explanation, show=False)
+
+                    plt.title(
+                        "Live Local Feature Contribution "
+                        "(Single-Case SHAP Bar Plot)"
+                    )
+
+                    plt.tight_layout()
+
+                    st.pyplot(
+                        plt.gcf(),
+                        clear_figure=True
+                    )
+
                 else:
-                    st.warning("SHAP output format unsupported for this model configuration.")
-                    
-                plt.title("Live Local Feature Contribution (Single-Case SHAP Bar Plot)")
-                plt.tight_layout()
-                st.pyplot(plt.gcf(), clear_figure=True)
-                
+
+                    st.warning(
+                        "Unsupported SHAP explanation format detected."
+                    )
+
         except Exception as shap_err:
-            st.error(f"Live SHAP visualization compilation exception encountered: {shap_err}")
+
+            st.error(
+                f"Live SHAP visualization compilation exception encountered: "
+                f"{shap_err}"
+            )
+
     else:
-        st.info("Model artifacts must be fully running to initiate live SHAP interpretation charts.")
+
+        st.info(
+            "Model artifacts must be fully running to initiate "
+            "live SHAP interpretation charts."
+        )
         
     st.write("---")
     st.markdown("### 📋 Prescriptive Remediation & Strategic Guidance")
