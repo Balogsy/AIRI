@@ -276,9 +276,7 @@ with tab_assessment:
     """)
 
     if model_loaded and explainer is not None:
-
         try:
-
             active_input_dict = {
                 "D1_Data_Quality": [d1_q1],
                 "D1_Data_Governance": [d1_q2],
@@ -304,22 +302,16 @@ with tab_assessment:
             missing_shap_cols = set(feature_cols) - set(active_input_dict.keys())
 
             if missing_shap_cols:
-
                 st.error(
                     f"Missing required features for SHAP generation: {missing_shap_cols}"
                 )
-
             else:
-
                 runtime_df = pd.DataFrame(active_input_dict)[feature_cols]
 
                 # Compute SHAP values
                 shap_values = explainer(runtime_df)
 
-                plt.figure(figsize=(8, 4))
-
                 if hasattr(shap_values, "values") and isinstance(shap_values.values, np.ndarray):
-
                     predicted_class_index = int(
                         rf_model.predict(runtime_df)[0]
                     )
@@ -328,79 +320,75 @@ with tab_assessment:
                     shap_array = shap_values.values
 
                     if len(shap_array.shape) == 3:
-
-                        # Case 1:
-                        # (samples, features, classes)
+                        # Case 1: (samples, features, classes)
                         if shap_array.shape[1] == len(runtime_df.columns):
-
-                            class_shap_values = (
-                                shap_array[0, :, predicted_class_index]
-                            )
-
-                        # Case 2:
-                        # (samples, classes, features)
+                            class_shap_values = shap_array[0, :, predicted_class_index]
+                        # Case 2: (samples, classes, features)
                         else:
-
-                            class_shap_values = (
-                                shap_array[0, predicted_class_index, :]
-                            )
-
+                            class_shap_values = shap_array[0, predicted_class_index, :]
                     else:
-
                         # Binary classification fallback
                         class_shap_values = shap_array[0]
 
-                    # Safe base value extraction
-                    base_vals = shap_values.base_values
+                    # ---------------------------------------------------
+                    # CLEAN AESTHETIC SHAP BAR PLOT (LIVE DATA ONLY)
+                    # ---------------------------------------------------
+                    feature_names = runtime_df.columns.tolist()
+                    shap_vals = class_shap_values
 
-                    if isinstance(base_vals[0], np.ndarray):
+                    # Create clean dataframe for plotting
+                    shap_df = pd.DataFrame({
+                        "Feature": feature_names,
+                        "SHAP Value": shap_vals
+                    })
 
-                        class_base_value = (
-                            base_vals[0][predicted_class_index]
+                    # Sort for better readability
+                    shap_df = shap_df.sort_values(by="SHAP Value", key=abs)
+
+                    # Plot
+                    fig, ax = plt.subplots(figsize=(9, 5))
+
+                    bars = ax.barh(
+                        shap_df["Feature"].str.replace("_", " "),
+                        shap_df["SHAP Value"]
+                    )
+
+                    # Styling improvements (publication-ready)
+                    ax.axvline(0, color="black", linewidth=1, alpha=0.6)
+                    ax.set_title(
+                        "Live Institutional SHAP Feature Contribution",
+                        fontsize=13,
+                        pad=12
+                    )
+
+                    ax.set_xlabel("SHAP Impact on Prediction")
+                    ax.set_ylabel("Governance Indicators")
+
+                    # Add value labels
+                    for bar in bars:
+                        width = bar.get_width()
+                        ax.text(
+                            width,
+                            bar.get_y() + bar.get_height() / 2,
+                            f"{width:.2f}",
+                            va="center",
+                            fontsize=8
                         )
 
-                    else:
-
-                        class_base_value = base_vals[0]
-
-                    # Construct explanation object
-                    explanation = shap.Explanation(
-                        values=class_shap_values,
-                        base_values=class_base_value,
-                        data=runtime_df.iloc[0].values,
-                        feature_names=runtime_df.columns.tolist()
-                    )
-
-                    # Render SHAP bar plot
-                    shap.plots.bar(explanation, show=False)
-
-                    plt.title(
-                        "Live Local Feature Contribution "
-                        "(Single-Case SHAP Bar Plot)"
-                    )
-
                     plt.tight_layout()
-
-                    st.pyplot(
-                        plt.gcf(),
-                        clear_figure=True
-                    )
+                    st.pyplot(fig, clear_figure=True)
 
                 else:
-
                     st.warning(
                         "Unsupported SHAP explanation format detected."
                     )
 
         except Exception as shap_err:
-
             st.error(
                 f"Live SHAP visualization compilation exception encountered: "
                 f"{shap_err}"
             )
-
     else:
-
         st.info(
             "Model artifacts must be fully running to initiate "
             "live SHAP interpretation charts."
